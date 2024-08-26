@@ -5,9 +5,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 )
 
 const (
+	pidFile     = "prbf2.pid"
 	updaterPath = "mods/pr/bin"
 )
 
@@ -18,9 +20,19 @@ type Server struct {
 
 func Open(path string) (*Server, error) {
 	//TODO: adopt and store PID in directory
-	return &Server{
+	s := &Server{
 		path: path,
-	}, nil
+	}
+
+	content, err := s.ReadFile(pidFile)
+	if err == nil {
+		pid, err := strconv.Atoi(string(content))
+		if err == nil {
+			s.processPID = &pid
+		}
+	}
+
+	return s, nil
 }
 
 func (s *Server) WriteFile(path string, data []byte) error {
@@ -29,6 +41,10 @@ func (s *Server) WriteFile(path string, data []byte) error {
 
 func (s *Server) ReadFile(path string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(s.path, path))
+}
+
+func (s *Server) RemoveFile(path string) error {
+	return os.Remove(filepath.Join(s.path, path))
 }
 
 func (s *Server) Update(ctx context.Context, outW, inW, errW io.Writer) error {

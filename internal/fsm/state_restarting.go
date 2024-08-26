@@ -42,6 +42,12 @@ type restartCounter struct {
 	cancel      context.CancelFunc
 }
 
+func NewRestartCounter(maxRestarts uint8) *restartCounter {
+	return &restartCounter{
+		maxRestarts: maxRestarts,
+	}
+}
+
 func (r *restartCounter) restartTimer() {
 	if r.timer != nil {
 		r.cancel()

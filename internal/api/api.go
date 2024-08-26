@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/sboon-gg/svctl/internal/daemon"
+	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/sboon-gg/svctl/svctl"
 )
 
@@ -19,7 +20,8 @@ func NewDaemonServer(daemon *daemon.Daemon) svctl.ServersServer {
 }
 
 func (s *daemonServer) Register(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
-	err := s.daemon.Register(opts.GetPath())
+	// TODO: Fetch settings pats from opts
+	err := s.daemon.Register(opts.GetPath(), settings.SvctlDir)
 	if err != nil {
 		return nil, err
 	}

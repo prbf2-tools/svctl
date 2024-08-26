@@ -39,9 +39,9 @@ type LoggerConfig struct {
 }
 
 func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error) {
-	handlers := make([]slog.Handler, len(loggers))
+	var handlers []slog.Handler
 
-	for i, logger := range loggers {
+	for _, logger := range loggers {
 		switch {
 		case logger.Discord != nil:
 			option := slogwebhook.Option{
@@ -55,7 +55,7 @@ func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error
 				option.Converter = DiscordTextConverter
 			}
 
-			handlers[i] = option.NewWebhookHandler()
+			handlers = append(handlers, option.NewWebhookHandler())
 		case logger.File != nil:
 			path := logger.File.Path
 			if !filepath.IsAbs(path) {
@@ -73,9 +73,9 @@ func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error
 
 			switch logger.File.Type {
 			case textLogger:
-				handlers[i] = slog.NewTextHandler(file, options)
+				handlers = append(handlers, slog.NewTextHandler(file, options))
 			case jsonLogger:
-				handlers[i] = slog.NewJSONHandler(file, options)
+				handlers = append(handlers, slog.NewJSONHandler(file, options))
 			default:
 				return nil, errors.New("invalid logger type")
 			}
@@ -86,9 +86,9 @@ func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error
 
 			switch logger.Stdout.Type {
 			case textLogger:
-				handlers[i] = slog.NewTextHandler(os.Stdout, options)
+				handlers = append(handlers, slog.NewTextHandler(os.Stdout, options))
 			case jsonLogger:
-				handlers[i] = slog.NewJSONHandler(os.Stdout, options)
+				handlers = append(handlers, slog.NewJSONHandler(os.Stdout, options))
 			default:
 				return nil, errors.New("invalid logger type")
 			}

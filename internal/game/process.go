@@ -3,11 +3,10 @@ package game
 import (
 	"errors"
 	"runtime"
+	"strconv"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
-
-// Should the process be zeroed if it stops by itself and IsRunning() returns false?
 
 var (
 	ErrProcessAlreadyRunning = errors.New("process already running")
@@ -30,10 +29,7 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	pid := proc.Pid
-	s.processPID = &pid
-
-	return nil
+	return s.storeProcessPID(proc.Pid)
 }
 
 func (s *Server) Stop() error {
@@ -51,9 +47,7 @@ func (s *Server) Stop() error {
 		return err
 	}
 
-	s.clearProcessPID()
-
-	return nil
+	return s.clearProcessPID()
 }
 
 func (s *Server) IsRunning() bool {
@@ -70,30 +64,49 @@ func (s *Server) IsRunning() bool {
 		}
 	}
 
-	proc, err := process.NewProcess(int32(*s.processPID))
-	if err != nil {
-		return false
-	}
-
-	exe, err := proc.Exe()
-	if err != nil {
-		return false
-	}
-
-	if s.processExe() != exe {
-		// Not our process.
+	isRunning, err := s.isRunning()
+	if err != nil || !isRunning {
 		s.clearProcessPID()
-		return false
-	}
-
-	isRunning, err := proc.IsRunning()
-	if err != nil {
 		return false
 	}
 
 	return isRunning
 }
 
-func (s *Server) clearProcessPID() {
+func (s *Server) isRunning() (bool, error) {
+	if s.processPID == nil {
+		return false, nil
+	}
+
+	proc, err := process.NewProcess(int32(*s.processPID))
+	if err != nil {
+		return false, err
+	}
+
+	if s.processExe() != processExe {
+		return false, nil
+	}
+
+	isRunning, err := proc.IsRunning()
+	if err != nil {
+		return false, err
+	}
+
+	return isRunning, nil
+}
+
+func (s *Server) clearProcessPID() error {
 	s.processPID = nil
+
+	return s.RemoveFile(pidFile)
+}
+
+func (s *Server) storeProcessPID(pid int) error {
+	err := s.WriteFile(pidFile, []byte(strconv.Itoa(pid)))
+	if err != nil {
+		return err
+	}
+
+	s.processPID = &pid
+	return nil
 }

@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+const (
+	MaxRestarts = 5
+)
+
 type StateRunning struct {
 	baseState
 	counter *restartCounter
@@ -13,7 +17,7 @@ type StateRunning struct {
 
 func NewStateRunning(counter *restartCounter) *StateRunning {
 	if counter == nil {
-		counter = &restartCounter{}
+		counter = NewRestartCounter(MaxRestarts)
 	}
 
 	return &StateRunning{

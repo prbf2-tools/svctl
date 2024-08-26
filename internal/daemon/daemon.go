@@ -5,7 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sboon-gg/svctl/internal/daemon/fsm"
+	"github.com/sboon-gg/svctl/internal/fsm"
+	"github.com/sboon-gg/svctl/internal/server"
 )
 
 const (
@@ -16,6 +17,7 @@ const (
 type Daemon struct {
 	cacheDir string
 	Servers  map[string]*fsm.FSM
+	ServerManager
 }
 
 func New() (*Daemon, error) {
@@ -31,9 +33,15 @@ func New() (*Daemon, error) {
 		return nil, err
 	}
 
+	serverManager, err := NewServerManager(filepath.Join(svctlCacheDir, stateFile))
+	if err != nil {
+		return nil, err
+	}
+
 	return &Daemon{
-		Servers:  make(map[string]*fsm.FSM),
-		cacheDir: svctlCacheDir,
+		Servers:       make(map[string]*fsm.FSM),
+		cacheDir:      svctlCacheDir,
+		ServerManager: *serverManager,
 	}, nil
 }
 
@@ -43,60 +51,69 @@ func Recover() (*Daemon, error) {
 		return nil, err
 	}
 
-	state, err := d.State()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, svPath := range state.Servers {
-		s, err := OpenServer(svPath)
+	for svPath, sv := range d.ServerManager.Servers {
+		s, err := server.Open(
+			svPath,
+			filepath.Join(svPath, sv.SettingsPath),
+		)
 		if err != nil {
 			return nil, err
 		}
 
-		d.Servers[svPath] = s
+		var initState fsm.State
+		initState = fsm.NewStateStopped()
+		if sv.CurrentState == running {
+			initState = fsm.NewStateRunning(fsm.NewRestartCounter(fsm.MaxRestarts))
+		}
+
+		d.Servers[svPath] = fsm.New(s, initState)
 	}
 
 	return d, nil
 }
 
-func (s *Daemon) Register(path string) error {
-	if _, ok := s.Servers[path]; ok {
-		return fmt.Errorf("server %q already exists", path)
-	}
-
-	sv, err := OpenServer(path, s.updaterCache)
+func (s *Daemon) Register(serverPath, settingsPath string) error {
+	err := s.ServerManager.AddServer(serverPath, settingsPath)
 	if err != nil {
 		return err
 	}
 
-	s.Servers[path] = sv
-
-	state, err := s.State()
+	sv, err := server.Open(serverPath, settingsPath)
 	if err != nil {
 		return err
 	}
 
-	state.Servers = append(state.Servers, path)
+	s.Servers[serverPath] = fsm.New(sv, fsm.NewStateStopped())
 
-	return s.SaveState(state)
+	return nil
 }
 
 func (s *Daemon) Start(path string) error {
-	srv, err := s.findServer(path)
+	sv, err := s.findServer(path)
 	if err != nil {
 		return err
 	}
 
-	return srv.Start()
+	err = sv.Event(fsm.EventStart)
+	if err != nil {
+		return err
+	}
+
+	return s.ServerManager.ChangeState(path, running)
 }
 
 func (s *Daemon) Stop(path string) error {
-	srv, err := s.findServer(path)
+	sv, err := s.findServer(path)
 	if err != nil {
 		return err
 	}
-	return srv.Stop()
+
+	err = sv.Event(fsm.EventStart)
+	if err != nil {
+		return err
+	}
+
+	return s.ServerManager.ChangeState(path, stopped)
 }
 
 func (d *Daemon) findServer(path string) (*fsm.FSM, error) {
