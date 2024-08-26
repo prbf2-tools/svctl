@@ -14,14 +14,14 @@ const (
 )
 
 func (s *Server) processExe() string {
-	return filepath.Join(s.path, processExe)
+	return filepath.Join(s.Path, processExe)
 }
 
 func (s *Server) startProcess() (*os.Process, error) {
 	allArgs := append([]string{processExe}, commonProcessArgs...)
 
 	proc, err := os.StartProcess(processExe, allArgs, &os.ProcAttr{
-		Dir: s.path,
+		Dir: s.Path,
 		Files: []*os.File{
 			os.Stdin,
 			os.Stdout,

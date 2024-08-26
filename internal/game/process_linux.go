@@ -15,11 +15,11 @@ const (
 )
 
 func (s *Server) processExe() string {
-	return filepath.Join(s.path, binaryDir, processExe)
+	return filepath.Join(s.Path, binaryDir, processExe)
 }
 
 func (s *Server) startProcess() (*os.Process, error) {
-	binDir := filepath.Join(s.path, binaryDir)
+	binDir := filepath.Join(s.Path, binaryDir)
 	fullExe := filepath.Join(binDir, processExe)
 
 	err := makeFileExecutable(fullExe)
@@ -33,7 +33,7 @@ func (s *Server) startProcess() (*os.Process, error) {
 	allArgs := append([]string{fullExe}, commonProcessArgs...)
 
 	return os.StartProcess(fullExe, allArgs, &os.ProcAttr{
-		Dir: s.path,
+		Dir: s.Path,
 		Env: env,
 		Sys: &syscall.SysProcAttr{
 			Setpgid: true,

@@ -14,17 +14,16 @@ const (
 )
 
 type Server struct {
-	path       string
+	Path       string
 	processPID *int
 }
 
 func Open(path string) (*Server, error) {
-	//TODO: adopt and store PID in directory
 	s := &Server{
-		path: path,
+		Path: path,
 	}
 
-	content, err := s.ReadFile(pidFile)
+	content, err := os.ReadFile(filepath.Join(s.Path, pidFile))
 	if err == nil {
 		pid, err := strconv.Atoi(string(content))
 		if err == nil {
@@ -33,18 +32,6 @@ func Open(path string) (*Server, error) {
 	}
 
 	return s, nil
-}
-
-func (s *Server) WriteFile(path string, data []byte) error {
-	return os.WriteFile(filepath.Join(s.path, path), data, 0644)
-}
-
-func (s *Server) ReadFile(path string) ([]byte, error) {
-	return os.ReadFile(filepath.Join(s.path, path))
-}
-
-func (s *Server) RemoveFile(path string) error {
-	return os.Remove(filepath.Join(s.path, path))
 }
 
 func (s *Server) Update(ctx context.Context, outW, inW, errW io.Writer) error {

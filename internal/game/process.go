@@ -2,6 +2,8 @@ package game
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strconv"
 
@@ -98,11 +100,11 @@ func (s *Server) isRunning() (bool, error) {
 func (s *Server) clearProcessPID() error {
 	s.processPID = nil
 
-	return s.RemoveFile(pidFile)
+	return os.Remove(filepath.Join(s.Path, pidFile))
 }
 
 func (s *Server) storeProcessPID(pid int) error {
-	err := s.WriteFile(pidFile, []byte(strconv.Itoa(pid)))
+	err := os.WriteFile(filepath.Join(s.Path, pidFile), []byte(strconv.Itoa(pid)), 0644)
 	if err != nil {
 		return err
 	}

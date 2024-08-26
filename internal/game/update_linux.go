@@ -14,7 +14,7 @@ const (
 )
 
 func (s *Server) update(ctx context.Context, outW, inW, errW io.Writer) error {
-	binPath := filepath.Join(s.path, updaterPath)
+	binPath := filepath.Join(s.Path, updaterPath)
 	exePath := filepath.Join(binPath, exe)
 
 	err := makeFileExecutable(exePath)

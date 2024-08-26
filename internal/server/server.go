@@ -1,6 +1,9 @@
 package server
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/sboon-gg/svctl/internal/game"
 	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/sboon-gg/svctl/pkg/templates"
@@ -44,7 +47,7 @@ func (s *Server) Render() error {
 	}
 
 	for _, output := range outputs {
-		err = s.WriteFile(output.Destination, output.Content)
+		err = os.WriteFile(filepath.Join(s.Path, output.Destination), output.Content, 0644)
 		if err != nil {
 			return err
 		}
