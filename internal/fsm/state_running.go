@@ -11,8 +11,10 @@ const (
 
 type StateRunning struct {
 	baseState
-	counter *restartCounter
-	cancel  context.CancelFunc
+	counter        *restartCounter
+	renderInterval time.Duration
+
+	cancel context.CancelFunc
 }
 
 func NewStateRunning(counter *restartCounter) *StateRunning {
@@ -21,7 +23,8 @@ func NewStateRunning(counter *restartCounter) *StateRunning {
 	}
 
 	return &StateRunning{
-		counter: counter,
+		counter:        counter,
+		renderInterval: time.Minute,
 	}
 }
 
@@ -29,7 +32,7 @@ func (s *StateRunning) OnEnter(fsm *FSM) {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
 
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(s.renderInterval)
 
 	sv := fsm.Server()
 

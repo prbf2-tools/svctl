@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+var (
+	ErrMaxRestartsReached = errors.New("max restarts reached")
+)
+
 type StateRestarting struct {
 	baseState
 	counter *restartCounter
@@ -21,7 +25,7 @@ func (s *StateRestarting) OnEnter(fsm *FSM) {
 	if s.counter != nil {
 		s.counter.Increment()
 		if s.counter.LimitReached() {
-			fsm.ChangeState(NewStateErrored(errors.New("max restarts reached")))
+			fsm.ChangeState(NewStateErrored(ErrMaxRestartsReached))
 			return
 		}
 	}

@@ -3,12 +3,17 @@ package fsm
 import (
 	"context"
 	"time"
-
-	"github.com/sboon-gg/svctl/internal/server"
 )
 
+type GameServer interface {
+	Start() error
+	Stop() error
+	IsRunning() bool
+	Render() error
+}
+
 type FSM struct {
-	server *server.Server
+	server GameServer
 
 	currentState State
 	desiredState State
@@ -16,14 +21,14 @@ type FSM struct {
 	cancel context.CancelFunc
 }
 
-func New(server *server.Server, initialState State) *FSM {
+func New(server GameServer, initialState State) *FSM {
 	return &FSM{
 		currentState: initialState,
 		server:       server,
 	}
 }
 
-func (f *FSM) Server() *server.Server {
+func (f *FSM) Server() GameServer {
 	return f.server
 }
 

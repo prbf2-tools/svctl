@@ -63,7 +63,7 @@ func Recover() (*Daemon, error) {
 		var initState fsm.State
 		initState = fsm.NewStateStopped()
 		if sv.CurrentState == running {
-			initState = fsm.NewStateRunning(fsm.NewRestartCounter(fsm.MaxRestarts))
+			initState = fsm.NewStateRunning(nil)
 		}
 
 		d.Servers[svPath] = fsm.New(s, initState)
