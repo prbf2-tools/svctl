@@ -13,7 +13,7 @@ const (
 	exe = "prserverupdater-linux64"
 )
 
-func (s *Server) update(ctx context.Context, outW, inW, errW io.Writer) error {
+func (s *Server) update(ctx context.Context, outW io.Writer, inR io.Reader, errW io.Writer) error {
 	binPath := filepath.Join(s.Path, updaterPath)
 	exePath := filepath.Join(binPath, exe)
 
@@ -26,7 +26,7 @@ func (s *Server) update(ctx context.Context, outW, inW, errW io.Writer) error {
 	cmd.Dir = binPath
 
 	cmd.Stdout = outW
-	cmd.Stdout = inW
+	cmd.Stdin = inR
 	cmd.Stderr = errW
 
 	return cmd.Run()

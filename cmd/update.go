@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/sboon-gg/svctl/internal/game"
 	"github.com/spf13/cobra"
 )
 
@@ -23,20 +24,12 @@ func updateCmd() *cobra.Command {
 }
 
 func (o *updateOpts) Run(cmd *cobra.Command) error {
-	// cache := prbf2update.NewCache(filepath.Join(o.path, ".update-cache"))
-	//
-	// u := prbf2update.New(o.path, cache)
-	//
-	// result, err := u.Update()
-	// if err != nil {
-	// 	return err
-	// }
-	//
-	// cmd.Println("Updated from", result.OldVersion, "to", result.NewVersion)
-	// TODO: implement this as FSM event
-	cmd.Println("Not implemented")
+	gameServer, err := game.Open(o.path)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return gameServer.Update(cmd.Context(), cmd.OutOrStdout(), cmd.InOrStdin(), cmd.OutOrStderr())
 }
 
 func init() {

@@ -7,6 +7,6 @@ import (
 	"io"
 )
 
-func (s *Server) update(ctx context.Context, outW, inW, errW io.Writer) error {
+func (s *Server) update(ctx context.Context, outW io.Writer, inR io.Reader, errW io.Writer) error {
 	return nil
 }

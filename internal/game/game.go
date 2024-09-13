@@ -34,8 +34,8 @@ func Open(path string) (*Server, error) {
 	return s, nil
 }
 
-func (s *Server) Update(ctx context.Context, outW, inW, errW io.Writer) error {
-	return s.update(ctx, outW, inW, errW)
+func (s *Server) Update(ctx context.Context, outW io.Writer, inR io.Reader, errW io.Writer) error {
+	return s.update(ctx, outW, inR, errW)
 }
 
 func makeFileExecutable(exePath string) error {
