@@ -13,11 +13,13 @@ import (
 
 type startOpts struct {
 	*serverOpts
+	*daemonOpts
 }
 
 func newStartOpts() *startOpts {
 	return &startOpts{
 		serverOpts: newServerOpts(),
+		daemonOpts: newDaemonOpts(),
 	}
 }
 
@@ -39,12 +41,13 @@ func startCmd() *cobra.Command {
 
 func (o *startOpts) AddFlags(cmd *cobra.Command) {
 	o.serverOpts.AddFlags(cmd)
+	o.daemonOpts.AddFlags(cmd)
 }
 
 func (o *startOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%s", o.port), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at localhost:50051: %v", err)
+		return fmt.Errorf("failed to connect to gRPC server at localhost:%s: %v", err, o.port)
 	}
 	defer conn.Close()
 	c := svctl.NewServersClient(conn)

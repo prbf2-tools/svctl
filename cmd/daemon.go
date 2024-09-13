@@ -13,14 +13,17 @@ import (
 )
 
 const (
-	daemonPort = "50051"
+	defaultDaemonPort = "50051"
 )
 
 type daemonOpts struct {
+	port string
 }
 
 func newDaemonOpts() *daemonOpts {
-	return &daemonOpts{}
+	return &daemonOpts{
+		port: defaultDaemonPort,
+	}
 }
 
 func daemonCmd() *cobra.Command {
@@ -31,7 +34,13 @@ func daemonCmd() *cobra.Command {
 		RunE: opts.Run,
 	}
 
+	opts.AddFlags(cmd)
+
 	return cmd
+}
+
+func (o *daemonOpts) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.port, "port", o.port, "Port to listen on")
 }
 
 func (o *daemonOpts) Run(cmd *cobra.Command, args []string) error {
@@ -40,9 +49,9 @@ func (o *daemonOpts) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", daemonPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", defaultDaemonPort))
 	if err != nil {
-		log.Fatalf("failed to listen on port %s: %v", daemonPort, err)
+		log.Fatalf("failed to listen on port %s: %v", defaultDaemonPort, err)
 	}
 
 	s := grpc.NewServer()
