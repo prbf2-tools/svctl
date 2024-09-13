@@ -9,7 +9,6 @@ import (
 type renderOpts struct {
 	*serverOpts
 	dryRun bool
-	values []string
 }
 
 func newRenderOpts() *renderOpts {
@@ -37,7 +36,6 @@ func renderCmd() *cobra.Command {
 	opts.serverOpts.AddFlags(cmd)
 
 	cmd.Flags().BoolVar(&opts.dryRun, "dry-run", false, "Print out rendered files")
-	cmd.Flags().StringSliceVar(&opts.values, "values", []string{}, "Additional values files - relative to execution working directory")
 
 	return cmd
 }
