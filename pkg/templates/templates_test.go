@@ -24,7 +24,7 @@ func TestTemplatesRender(t *testing.T) {
 						Source:      "file.yaml.tpl",
 						Destination: "file.yaml",
 					},
-					Content: []byte("pyBool: True\nanother: test-string\nquoted: \"should-be-quoted\"\nnegativeBool: false\nenvVal: \n"),
+					Content: []byte("pyBool: True\nanother: test-string\nquoted: \"should-be-quoted\"\nnegativeBool: false\nenvVal: \nzeroValue: 1\n"),
 				},
 				{
 					Template: Template{
@@ -46,9 +46,10 @@ mapList.append sahel gpm_coop 64
 		{
 			name: "overwrite",
 			values: Values{
-				"boolTest": false,
-				"test":     "changed-string",
-				"quoted":   "but different",
+				"boolTest":              false,
+				"test":                  "changed-string",
+				"quoted":                "but different",
+				"overriddenByZeroValue": 0,
 				"maps": []map[string]interface{}{
 					{
 						"name": "saaremaa",
@@ -64,7 +65,7 @@ mapList.append sahel gpm_coop 64
 						Source:      "file.yaml.tpl",
 						Destination: "file.yaml",
 					},
-					Content: []byte("pyBool: False\nanother: changed-string\nquoted: \"but different\"\nnegativeBool: false\nenvVal: env-val\n"),
+					Content: []byte("pyBool: False\nanother: changed-string\nquoted: \"but different\"\nnegativeBool: false\nenvVal: env-val\nzeroValue: 0\n"),
 				},
 				{
 					Template: Template{

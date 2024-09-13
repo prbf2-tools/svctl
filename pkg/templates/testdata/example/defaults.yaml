@@ -2,6 +2,7 @@ boolTest: true
 test: test-string
 quoted: "should-be-quoted"
 negativeBool: false
+overriddenByZeroValue: 1
 maps:
   - name: kashan_desert
     mode: gpm_cq
