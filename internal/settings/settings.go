@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ConfigFile          = "config.yaml"
+	configFileName      = "config.yaml"
 	defaultValuesFile   = "values.yaml"
 	defaultTemplatesDir = "templates"
 )
@@ -70,9 +70,16 @@ func Initialize(path string, opts *Opts) (*Settings, error) {
 		opts = &Opts{}
 	}
 
-	err := os.Mkdir(path, 0755)
+	_, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+
+		err := os.Mkdir(path, 0755)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	config := &Config{
