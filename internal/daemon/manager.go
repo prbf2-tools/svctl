@@ -32,7 +32,7 @@ func NewServerManager(cachePath string) (*ServerManager, error) {
 		return nil, err
 	}
 
-	var servers map[string]*ServerInfo
+	servers := make(map[string]*ServerInfo)
 	err = yaml.Unmarshal(content, &servers)
 	if err != nil {
 		return nil, err

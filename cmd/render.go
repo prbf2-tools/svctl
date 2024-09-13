@@ -106,10 +106,6 @@ func (opts *renderOpts) render() ([]string, error) {
 		return files, errors.New("Script has not been initialized, run `init` first.")
 	}
 
-	if err != nil {
-		return files, err
-	}
-
 	if opts.dryRun {
 		outputs, err := si.DryRender()
 		if err != nil {
