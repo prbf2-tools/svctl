@@ -5,8 +5,11 @@ import (
 	"path/filepath"
 
 	"github.com/sboon-gg/svctl/internal/server"
-	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/spf13/cobra"
+)
+
+const (
+	defaultSettingsPath = ".svctl"
 )
 
 type serverOpts struct {
@@ -17,13 +20,13 @@ type serverOpts struct {
 func newServerOpts() *serverOpts {
 	return &serverOpts{
 		serverPath: ".",
-		svctlPath:  settings.SvctlDir,
+		svctlPath:  defaultSettingsPath,
 	}
 }
 
 func (opts *serverOpts) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&opts.serverPath, "path", "p", opts.serverPath, "Path to server directory (default is current directory)")
-	cmd.Flags().StringVar(&opts.svctlPath, "svctl-path", opts.svctlPath, "Path to svctl directory")
+	cmd.Flags().StringVarP(&opts.serverPath, "path", "p", opts.serverPath, "Path to server directory")
+	cmd.Flags().StringVar(&opts.svctlPath, "settings", opts.svctlPath, "Path to settings directory")
 }
 
 func (opts *serverOpts) Path() (string, error) {

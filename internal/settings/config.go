@@ -12,8 +12,9 @@ type ValuesSource struct {
 }
 
 type Config struct {
-	Values  []ValuesSource `yaml:"values"`
-	Loggers []LoggerConfig `yaml:"loggers"`
+	Values        []ValuesSource `yaml:"values"`
+	Loggers       []LoggerConfig `yaml:"loggers"`
+	TemplatesPath string         `yaml:"templates"`
 }
 
 func (s *Settings) Config() (*Config, error) {

@@ -12,6 +12,7 @@ service Servers {
 
 message ServerOpts {
   string path = 1;
+  string settingsPath = 2;
 }
 
 enum Status {
@@ -22,5 +23,6 @@ enum Status {
 
 message ServerInfo {
   string path = 1;
-  Status status = 2;
+  string settingsPath = 2;
+  Status status = 3;
 }
