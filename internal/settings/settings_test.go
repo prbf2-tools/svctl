@@ -43,6 +43,16 @@ func TestSettingsDefaultConfig(t *testing.T) {
 	assert.FileExists(t, filepath.Join(path, "config.yaml"))
 }
 
+func TestSettingsDoubleInit(t *testing.T) {
+	path := t.TempDir()
+
+	_, err := settings.Initialize(path, nil)
+	require.NoError(t, err)
+
+	_, err = settings.Initialize(path, nil)
+	require.Error(t, err)
+}
+
 func TestSettingsWithTemplatesRepo(t *testing.T) {
 	settingsPath := t.TempDir()
 	templatesRepoPath := t.TempDir()

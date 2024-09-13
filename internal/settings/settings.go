@@ -80,6 +80,11 @@ func Initialize(path string, opts *Opts) (*Settings, error) {
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		_, err := os.Stat(filepath.Join(path, configFileName))
+		if err == nil {
+			return nil, fmt.Errorf("settings already initialized in %q", path)
+		}
 	}
 
 	config := &Config{
