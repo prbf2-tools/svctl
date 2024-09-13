@@ -47,7 +47,13 @@ func (s *Server) Render() error {
 	}
 
 	for _, output := range outputs {
-		err = os.WriteFile(filepath.Join(s.Path, output.Destination), output.Content, 0644)
+		dst := filepath.Join(s.Path, output.Destination)
+		err = os.MkdirAll(filepath.Dir(dst), 0755)
+		if err != nil {
+			return err
+		}
+
+		err = os.WriteFile(dst, output.Content, 0644)
 		if err != nil {
 			return err
 		}
