@@ -19,7 +19,8 @@ func NewDaemonServer(daemon *daemon.Daemon) svctl.ServersServer {
 }
 
 func (s *daemonServer) Register(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
-	err := s.daemon.Register(opts.GetPath())
+	// TODO: Fetch settings pats from opts
+	err := s.daemon.Register(opts.GetPath(), opts.GetSettingsPath())
 	if err != nil {
 		return nil, err
 	}

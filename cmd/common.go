@@ -5,25 +5,28 @@ import (
 	"path/filepath"
 
 	"github.com/sboon-gg/svctl/internal/server"
-	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/spf13/cobra"
 )
 
+const (
+	defaultSettingsPath = ".svctl"
+)
+
 type serverOpts struct {
-	serverPath string
-	svctlPath  string
+	serverPath   string
+	settingsPath string
 }
 
 func newServerOpts() *serverOpts {
 	return &serverOpts{
-		serverPath: ".",
-		svctlPath:  settings.SvctlDir,
+		serverPath:   ".",
+		settingsPath: defaultSettingsPath,
 	}
 }
 
 func (opts *serverOpts) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&opts.serverPath, "path", "p", opts.serverPath, "Path to server directory (default is current directory)")
-	cmd.Flags().StringVar(&opts.svctlPath, "svctl-path", opts.svctlPath, "Path to svctl directory")
+	cmd.Flags().StringVarP(&opts.serverPath, "path", "p", opts.serverPath, "Path to server directory")
+	cmd.Flags().StringVar(&opts.settingsPath, "settings", opts.settingsPath, "Path to settings directory")
 }
 
 func (opts *serverOpts) Path() (string, error) {
@@ -34,12 +37,12 @@ func (opts *serverOpts) Path() (string, error) {
 	return concatWithWorkingDir(opts.serverPath)
 }
 
-func (opts *serverOpts) SvctlPath() (string, error) {
-	if filepath.IsAbs(opts.svctlPath) {
-		return opts.svctlPath, nil
+func (opts *serverOpts) SettingsPath() (string, error) {
+	if filepath.IsAbs(opts.settingsPath) {
+		return opts.settingsPath, nil
 	}
 
-	return concatWithWorkingDir(opts.svctlPath)
+	return concatWithWorkingDir(opts.settingsPath)
 }
 
 func concatWithWorkingDir(path string) (string, error) {
@@ -57,7 +60,7 @@ func (opts *serverOpts) Server() (*server.Server, error) {
 		return nil, err
 	}
 
-	svctlPath, err := opts.SvctlPath()
+	svctlPath, err := opts.SettingsPath()
 	if err != nil {
 		return nil, err
 	}

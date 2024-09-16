@@ -13,11 +13,13 @@ import (
 
 type stopOpts struct {
 	*serverOpts
+	*daemonOpts
 }
 
 func newStopOpts() *stopOpts {
 	return &stopOpts{
 		serverOpts: newServerOpts(),
+		daemonOpts: newDaemonOpts(),
 	}
 }
 
@@ -27,7 +29,7 @@ func stopCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "stop",
 		Short:        "Stops the server",
-		Long:         `Stops the server`,
+		Long:         `Send a stop signal to daemon to stop the server`,
 		SilenceUsage: true,
 		RunE:         opts.Run,
 	}
@@ -39,12 +41,13 @@ func stopCmd() *cobra.Command {
 
 func (o *stopOpts) AddFlags(cmd *cobra.Command) {
 	o.serverOpts.AddFlags(cmd)
+	o.daemonOpts.AddFlags(cmd)
 }
 
 func (o *stopOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at localhost:50051: %v", err)
+		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
 	}
 	defer conn.Close()
 	c := svctl.NewServersClient(conn)
@@ -65,42 +68,6 @@ func (o *stopOpts) Run(cmd *cobra.Command, args []string) error {
 	cmd.Printf("Server status: %v\n", r.GetStatus().String())
 	return nil
 }
-
-// func (o *stopOpts) Run(cmd *cobra.Command, args []string) error {
-// 	sv, err := o.Server()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	cache, err := sv.Cache()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	var proc *prbf2.Proc
-// 	if cache.PID < 0 {
-// 		return fmt.Errorf("server is not running")
-// 	}
-//
-// 	proc, err = prbf2.OpenProc(cache.PID)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	err = proc.Kill()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	cache.PID = -1
-// 	err = sv.WriteCache(cache)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	cmd.Println("Server stopped")
-// 	return nil
-// }
 
 func init() {
 	rootCmd.AddCommand(stopCmd())

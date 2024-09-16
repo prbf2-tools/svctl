@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"errors"
-
 	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/spf13/cobra"
 )
@@ -38,14 +36,9 @@ func initCmd() *cobra.Command {
 }
 
 func (opts *initOpts) Run() error {
-	svctlPath, err := opts.SvctlPath()
+	svctlPath, err := opts.SettingsPath()
 	if err != nil {
 		return err
-	}
-
-	_, err = opts.Server()
-	if err == nil {
-		return errors.New("svctl was already initialized on this path - run `svctl cleanup` before initializing again")
 	}
 
 	_, err = settings.Initialize(svctlPath, &settings.Opts{

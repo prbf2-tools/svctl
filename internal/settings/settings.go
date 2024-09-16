@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -9,13 +10,9 @@ import (
 )
 
 const (
-	SvctlDir     = ".svctl"
-	TemplatesDir = "templates"
-
-	ConfigFile        = "config.yaml"
-	defaultValuesFile = "values.yaml"
-
-	CacheFile = ".cache.yaml"
+	configFileName      = "config.yaml"
+	defaultValuesFile   = "values.yaml"
+	defaultTemplatesDir = "templates"
 )
 
 type Settings struct {
@@ -41,9 +38,17 @@ func Open(path string) (*Settings, error) {
 
 	s.Log = logger
 
-	templatesPath := filepath.Join(path, TemplatesDir)
-	_, err = os.Stat(templatesPath)
-	if err == nil {
+	if config.TemplatesPath != "" {
+		templatesPath := config.TemplatesPath
+		if !filepath.IsAbs(templatesPath) {
+			templatesPath = filepath.Join(path, config.TemplatesPath)
+		}
+
+		_, err = os.Stat(templatesPath)
+		if err != nil {
+			return nil, fmt.Errorf("templates path %q not found", templatesPath)
+		}
+
 		t, err := templates.NewFromPath(templatesPath)
 		if err != nil {
 			return nil, err
@@ -65,9 +70,21 @@ func Initialize(path string, opts *Opts) (*Settings, error) {
 		opts = &Opts{}
 	}
 
-	err := os.Mkdir(path, 0755)
+	_, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+
+		err := os.Mkdir(path, 0755)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		_, err := os.Stat(filepath.Join(path, configFileName))
+		if err == nil {
+			return nil, fmt.Errorf("settings already initialized in %q", path)
+		}
 	}
 
 	config := &Config{
@@ -89,7 +106,7 @@ func Initialize(path string, opts *Opts) (*Settings, error) {
 	}
 
 	if opts.TemplatesRepo != "" {
-		templatesPath := filepath.Join(path, TemplatesDir)
+		templatesPath := filepath.Join(path, defaultTemplatesDir)
 		err = cloneTemplates(templatesPath, opts.TemplatesRepo, opts.Token)
 		if err != nil {
 			return nil, err
@@ -113,6 +130,8 @@ func Initialize(path string, opts *Opts) (*Settings, error) {
 		config.Values = append(config.Values, ValuesSource{
 			File: defaultValuesFile,
 		})
+
+		config.TemplatesPath = templatesPath
 	}
 
 	err = writeConfig(path, config)

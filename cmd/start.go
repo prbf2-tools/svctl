@@ -13,11 +13,13 @@ import (
 
 type startOpts struct {
 	*serverOpts
+	*daemonOpts
 }
 
 func newStartOpts() *startOpts {
 	return &startOpts{
 		serverOpts: newServerOpts(),
+		daemonOpts: newDaemonOpts(),
 	}
 }
 
@@ -27,7 +29,7 @@ func startCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "start",
 		Short:        "Starts the server",
-		Long:         `Starts the server`,
+		Long:         `Send a start signal to daemon to start the server`,
 		SilenceUsage: true,
 		RunE:         opts.Run,
 	}
@@ -39,12 +41,13 @@ func startCmd() *cobra.Command {
 
 func (o *startOpts) AddFlags(cmd *cobra.Command) {
 	o.serverOpts.AddFlags(cmd)
+	o.daemonOpts.AddFlags(cmd)
 }
 
 func (o *startOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at localhost:50051: %v", err)
+		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
 	}
 	defer conn.Close()
 	c := svctl.NewServersClient(conn)
@@ -65,56 +68,6 @@ func (o *startOpts) Run(cmd *cobra.Command, args []string) error {
 	cmd.Printf("Server started: %v\n", r.GetStatus().String())
 	return nil
 }
-
-// func (o *startOpts) Run(cmd *cobra.Command, args []string) error {
-// 	sv, err := o.Server()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	cache, err := sv.Cache()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	var proc *prbf2.Proc
-// 	if cache.PID > 0 {
-// 		proc, err = prbf2.OpenProc(cache.PID)
-// 		if err != nil {
-// 			return err
-// 		}
-//
-// 		err = proc.HealthCheck()
-// 		if err != nil {
-// 			proc, err = prbf2.NewProc(sv.Path)
-// 			if err != nil {
-// 				return err
-// 			}
-// 		} else {
-// 			return fmt.Errorf("server is already running")
-// 		}
-// 	} else {
-// 		proc, err = prbf2.NewProc(sv.Path)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-//
-// 	err = proc.HealthCheck()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	cache.PID = proc.Pid
-//
-// 	err = sv.WriteCache(cache)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	cmd.Println("Server started")
-// 	return nil
-// }
 
 func init() {
 	rootCmd.AddCommand(startCmd())

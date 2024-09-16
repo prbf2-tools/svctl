@@ -6,17 +6,10 @@
 stateDiagram-v2
     [*] --> Stopped
     Stopped --> [*]
-    Stopped --> Starting: Start
-    Stopped --> Adopting: Adopt
-    Adopting --> Running
-    Starting --> Running
-    Running --> Stopping: Stop
-    Stopping --> Stopped
-    Running --> Exited
+    Stopped --> Running: Start
+    Running --> Stopped: Stop
     Running --> Restarting: Restart
-    Exited --> Running
-    Exited --> Errored
-    Errored --> CleaningError: Stop
-    CleaningError --> Stopped
     Restarting --> Running
+    Restarting --> Errored
+    Errored --> Stopped: Reset
 ```

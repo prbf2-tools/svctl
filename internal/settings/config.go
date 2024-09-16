@@ -12,14 +12,15 @@ type ValuesSource struct {
 }
 
 type Config struct {
-	Values  []ValuesSource `yaml:"values"`
-	Loggers []LoggerConfig `yaml:"loggers"`
+	Values        []ValuesSource `yaml:"values"`
+	Loggers       []LoggerConfig `yaml:"loggers"`
+	TemplatesPath string         `yaml:"templates"`
 }
 
 func (s *Settings) Config() (*Config, error) {
 	var config Config
 
-	content, err := os.ReadFile(filepath.Join(s.path, ConfigFile))
+	content, err := os.ReadFile(filepath.Join(s.path, configFileName))
 	if err != nil {
 		return nil, err
 	}
@@ -42,5 +43,5 @@ func writeConfig(path string, conf *Config) error {
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(path, ConfigFile), content, 0644)
+	return os.WriteFile(filepath.Join(path, configFileName), content, 0644)
 }

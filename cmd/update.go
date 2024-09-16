@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"path/filepath"
-
-	"github.com/sboon-gg/svctl/pkg/prbf2update"
+	"github.com/sboon-gg/svctl/internal/game"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +13,8 @@ func updateCmd() *cobra.Command {
 	opts := &updateOpts{}
 
 	cmd := &cobra.Command{
-		Use: "update",
+		Use:   "update <path>",
+		Short: "Manually update the server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.path = args[0]
 			return opts.Run(cmd)
@@ -26,18 +25,12 @@ func updateCmd() *cobra.Command {
 }
 
 func (o *updateOpts) Run(cmd *cobra.Command) error {
-	cache := prbf2update.NewCache(filepath.Join(o.path, ".update-cache"))
-
-	u := prbf2update.New(o.path, cache)
-
-	result, err := u.Update()
+	gameServer, err := game.Open(o.path)
 	if err != nil {
 		return err
 	}
 
-	cmd.Println("Updated from", result.OldVersion, "to", result.NewVersion)
-
-	return nil
+	return gameServer.Update(cmd.Context(), cmd.OutOrStdout(), cmd.InOrStdin(), cmd.OutOrStderr())
 }
 
 func init() {

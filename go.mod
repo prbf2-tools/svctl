@@ -5,15 +5,16 @@ go 1.22.0
 require (
 	dario.cat/mergo v1.0.0
 	github.com/Masterminds/sprig/v3 v3.2.3
-	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/gocarina/gocsv v0.0.0-20231116093920-b87c2d0e983a
 	github.com/goccy/go-yaml v1.11.3
 	github.com/golangci/golangci-lint v1.57.1
+	github.com/samber/slog-multi v1.0.2
+	github.com/samber/slog-webhook/v2 v2.5.1
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.9.0
+	go.uber.org/mock v0.4.0
 	golang.org/x/sys v0.18.0
 	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.33.0
@@ -68,10 +69,12 @@ require (
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/firefart/nonamedreturns v1.0.4 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
 	github.com/ghostiam/protogetter v0.3.5 // indirect
 	github.com/go-critic/go-critic v0.11.2 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
+	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-toolsmith/astcast v1.1.0 // indirect
 	github.com/go-toolsmith/astcopy v1.1.0 // indirect
@@ -161,8 +164,6 @@ require (
 	github.com/ryanrolds/sqlclosecheck v0.5.1 // indirect
 	github.com/samber/lo v1.38.1 // indirect
 	github.com/samber/slog-common v0.15.1 // indirect
-	github.com/samber/slog-multi v1.0.2 // indirect
-	github.com/samber/slog-webhook/v2 v2.5.1 // indirect
 	github.com/sanposhiho/wastedassign/v2 v2.0.7 // indirect
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/sashamelentyev/interfacebloat v1.1.0 // indirect

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"text/template"
 
 	"dario.cat/mergo"
@@ -172,29 +171,6 @@ func (t *Renderer) Render(values Values) ([]RenderOutput, error) {
 	}
 
 	return rendered, nil
-}
-
-func (t *Renderer) RenderInto(path string, values Values) error {
-	outputs, err := t.Render(values)
-	if err != nil {
-		return err
-	}
-
-	for _, out := range outputs {
-		dest := filepath.Join(path, out.Destination)
-
-		err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(dest, out.Content, 0644)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (t *Renderer) DefaultsContent() ([]byte, error) {
