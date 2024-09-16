@@ -29,7 +29,7 @@ func startCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "start",
 		Short:        "Starts the server",
-		Long:         `Starts the server`,
+		Long:         `Send a start signal to daemon to start the server`,
 		SilenceUsage: true,
 		RunE:         opts.Run,
 	}

@@ -13,7 +13,8 @@ func updateCmd() *cobra.Command {
 	opts := &updateOpts{}
 
 	cmd := &cobra.Command{
-		Use: "update",
+		Use:   "update <path>",
+		Short: "Manually update the server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.path = args[0]
 			return opts.Run(cmd)

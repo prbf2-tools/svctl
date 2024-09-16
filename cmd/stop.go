@@ -29,7 +29,7 @@ func stopCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "stop",
 		Short:        "Stops the server",
-		Long:         `Stops the server`,
+		Long:         `Send a stop signal to daemon to stop the server`,
 		SilenceUsage: true,
 		RunE:         opts.Run,
 	}
