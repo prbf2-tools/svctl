@@ -16,11 +16,13 @@ import (
 
 type registerOpts struct {
 	*serverOpts
+	*daemonOpts
 }
 
 func newRegisterOpts() *registerOpts {
 	return &registerOpts{
 		serverOpts: newServerOpts(),
+		daemonOpts: newDaemonOpts(),
 	}
 }
 
@@ -40,12 +42,13 @@ func registerCmd() *cobra.Command {
 
 func (o *registerOpts) AddFlags(cmd *cobra.Command) {
 	o.serverOpts.AddFlags(cmd)
+	o.daemonOpts.AddFlags(cmd)
 }
 
 func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at localhost:50051: %v", err)
+		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
 	}
 	defer conn.Close()
 	c := svctl.NewServersClient(conn)
@@ -60,7 +63,7 @@ func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
 
 	r, err := c.Register(ctx, &svctl.ServerOpts{Path: path})
 	if err != nil {
-		return fmt.Errorf("error calling function Start: %v", err)
+		return fmt.Errorf("error calling function Register: %v", err)
 	}
 
 	cmd.Printf("Server status: %v\n", r.GetStatus().String())
