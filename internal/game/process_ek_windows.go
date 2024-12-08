@@ -16,7 +16,7 @@ const (
 	statusNotResponding     = "NOT RESPONDING"
 )
 
-var errorWindowTitles = [4]string{
+var errorWindowTitles = [3]string{
 	"BF2 Memory Error",
 	"BF2 Error",
 	"Microsoft Visual C++ Runtime Library",

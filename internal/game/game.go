@@ -32,19 +32,3 @@ func Open(path string) (*Server, error) {
 func (s *Server) Update(ctx context.Context, outW io.Writer, inR io.Reader, errW io.Writer) error {
 	return s.update(ctx, outW, inR, errW)
 }
-
-func makeFileExecutable(exePath string) error {
-	info, err := os.Stat(exePath)
-	if err != nil {
-		return err
-	}
-
-	if info.Mode().Perm()&0100 == 0 {
-		err = os.Chmod(exePath, info.Mode()|0100)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}

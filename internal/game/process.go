@@ -151,3 +151,19 @@ func (s *Server) storeProcessPID(pid int) error {
 	s.processPID = &pid
 	return nil
 }
+
+func makeFileExecutable(exePath string) error {
+	info, err := os.Stat(exePath)
+	if err != nil {
+		return err
+	}
+
+	if info.Mode().Perm()&0100 == 0 {
+		err = os.Chmod(exePath, info.Mode()|0100)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
