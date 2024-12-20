@@ -9,6 +9,7 @@ require (
 	github.com/gocarina/gocsv v0.0.0-20231116093920-b87c2d0e983a
 	github.com/goccy/go-yaml v1.11.3
 	github.com/golangci/golangci-lint v1.57.1
+	github.com/ncruces/go-strftime v0.1.9
 	github.com/samber/slog-multi v1.0.2
 	github.com/samber/slog-webhook/v2 v2.5.1
 	github.com/shirou/gopsutil/v3 v3.24.2
