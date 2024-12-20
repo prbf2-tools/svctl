@@ -108,7 +108,7 @@ func (s *Daemon) Stop(path string) error {
 		return err
 	}
 
-	err = sv.Event(fsm.EventStart)
+	err = sv.Event(fsm.EventStop)
 	if err != nil {
 		return err
 	}
