@@ -61,5 +61,7 @@ func (opts *renderOpts) Run(cmd *cobra.Command) error {
 		}
 	}
 
+	cmd.Println("Rendered templates.")
+
 	return nil
 }

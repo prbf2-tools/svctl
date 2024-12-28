@@ -52,9 +52,14 @@ func Recover() (*Daemon, error) {
 	}
 
 	for svPath, sv := range d.ServerManager.Servers {
+		settingsPath := sv.SettingsPath
+		if !filepath.IsAbs(settingsPath) {
+			settingsPath = filepath.Join(svPath, sv.SettingsPath)
+		}
+
 		s, err := server.Open(
 			svPath,
-			filepath.Join(svPath, sv.SettingsPath),
+			settingsPath,
 		)
 		if err != nil {
 			return nil, err

@@ -61,7 +61,15 @@ func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	r, err := c.Register(ctx, &svctl.ServerOpts{Path: path})
+	settingsPath, err := o.SettingsPath()
+	if err != nil {
+		return err
+	}
+
+	r, err := c.Register(ctx, &svctl.ServerOpts{
+		Path:         path,
+		SettingsPath: settingsPath,
+	})
 	if err != nil {
 		return fmt.Errorf("error calling function Register: %v", err)
 	}
