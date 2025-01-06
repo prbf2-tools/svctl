@@ -57,6 +57,8 @@ func (s *ServerSuite) TestServerLifecycle() {
 
 	err = sv.Stop()
 	s.Require().NoError(err)
+
+	s.Never(sv.IsRunning, 10*time.Second, 100*time.Millisecond)
 }
 
 func TestServerSuite(t *testing.T) {

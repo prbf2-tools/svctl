@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"context"
+	reflect "reflect"
 	"time"
 )
 
@@ -22,10 +23,16 @@ type FSM struct {
 }
 
 func New(server GameServer, initialState State) *FSM {
-	return &FSM{
-		currentState: initialState,
+	fsm := FSM{
+		currentState: &baseState{},
+		desiredState: initialState,
 		server:       server,
 	}
+
+	fsm.Transition()
+	go fsm.Run()
+
+	return &fsm
 }
 
 func (f *FSM) Server() GameServer {
@@ -37,6 +44,7 @@ func (f *FSM) ChangeState(state State) {
 }
 
 func (f *FSM) Event(event Event) error {
+	println("event", event)
 	if f.currentState == nil {
 		return nil
 	}
@@ -47,11 +55,7 @@ func (f *FSM) Event(event Event) error {
 		f.desiredState = nextState
 	}
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (f *FSM) Run() {
@@ -62,13 +66,13 @@ func (f *FSM) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	f.cancel = cancel
 
-	timer := time.NewTimer(500 * time.Millisecond)
+	ticker := time.NewTicker(500 * time.Millisecond)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-timer.C:
+		case <-ticker.C:
 			f.Transition()
 		}
 	}

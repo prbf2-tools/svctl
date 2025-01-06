@@ -11,6 +11,7 @@ import (
 
 const (
 	processExe = "prbf2_w32ded.exe"
+	binaryDir  = ""
 )
 
 func (s *Server) processExe() string {

@@ -51,7 +51,7 @@ func Recover() (*Daemon, error) {
 		return nil, err
 	}
 
-	for svPath, sv := range d.ServerManager.Servers {
+	for svPath, sv := range d.ServerManager.ServersInfo {
 		settingsPath := sv.SettingsPath
 		if !filepath.IsAbs(settingsPath) {
 			settingsPath = filepath.Join(svPath, sv.SettingsPath)
@@ -62,16 +62,32 @@ func Recover() (*Daemon, error) {
 			settingsPath,
 		)
 		if err != nil {
-			return nil, err
+			s.Log.Error("Unable to open server", "svPath", svPath, "settingsPath", settingsPath, "err", err)
+			continue
 		}
 
-		var initState fsm.State
-		initState = fsm.NewStateStopped()
-		if sv.CurrentState == running {
-			initState = fsm.NewStateRunning(nil)
+		var machine *fsm.FSM
+		if s.IsRunning() {
+			machine = fsm.New(s, fsm.NewStateRunning(nil))
+			if sv.DesiredState == Stopped {
+				err := machine.Event(fsm.EventStop)
+				if err != nil {
+					s.Log.Error("Unable to reach desired state on recovery", "desiredState", sv.DesiredState, "err", err)
+					continue
+				}
+			}
+		} else {
+			machine = fsm.New(s, fsm.NewStateStopped())
+			if sv.DesiredState == Running {
+				err := machine.Event(fsm.EventStart)
+				if err != nil {
+					s.Log.Error("Unable to reach desired state on recovery", "desiredState", sv.DesiredState, "err", err)
+					continue
+				}
+			}
 		}
 
-		d.Servers[svPath] = fsm.New(s, initState)
+		d.Servers[svPath] = machine
 	}
 
 	return d, nil
@@ -99,12 +115,12 @@ func (s *Daemon) Start(path string) error {
 		return err
 	}
 
-	err = sv.Event(fsm.EventStart)
+	err = s.ServerManager.ChangeState(path, Running)
 	if err != nil {
 		return err
 	}
 
-	return s.ServerManager.ChangeState(path, running)
+	return sv.Event(fsm.EventStart)
 }
 
 func (s *Daemon) Stop(path string) error {
@@ -113,12 +129,42 @@ func (s *Daemon) Stop(path string) error {
 		return err
 	}
 
-	err = sv.Event(fsm.EventStop)
+	err = s.ServerManager.ChangeState(path, Stopped)
 	if err != nil {
 		return err
 	}
 
-	return s.ServerManager.ChangeState(path, stopped)
+	return sv.Event(fsm.EventStop)
+}
+
+type ServerStatus struct {
+	DesiredState ServerState
+	CurrentState ServerState
+	SettingsPath string
+}
+
+func (s *Daemon) Status(path string) (*ServerStatus, error) {
+	sv, err := s.findServer(path)
+	if err != nil {
+		return nil, err
+	}
+
+	info, ok := s.ServersInfo[path]
+	if !ok {
+		return nil, fmt.Errorf("server %q not found", path)
+	}
+
+	status := ServerStatus{
+		DesiredState: info.DesiredState,
+		CurrentState: Stopped,
+		SettingsPath: info.SettingsPath,
+	}
+
+	if sv.Server() != nil && sv.Server().IsRunning() {
+		status.CurrentState = Running
+	}
+
+	return &status, nil
 }
 
 func (d *Daemon) findServer(path string) (*fsm.FSM, error) {

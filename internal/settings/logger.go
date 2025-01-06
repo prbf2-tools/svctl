@@ -38,7 +38,7 @@ type LoggerConfig struct {
 	Stdout  *StdoutLogger  `yaml:"std,omitempty"`
 }
 
-func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error) {
+func NewLogger(settingsPath string, loggers []LoggerConfig, with ...any) (*slog.Logger, error) {
 	var handlers []slog.Handler
 
 	for _, logger := range loggers {
@@ -95,7 +95,9 @@ func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error
 		}
 	}
 
-	return slog.New(slogmulti.Fanout(handlers...)), nil
+	logger := slog.New(slogmulti.Fanout(handlers...)).With(with...)
+
+	return logger, nil
 }
 
 func DiscordEmbedConverter(addSource bool, replaceAttr func(groups []string, a slog.Attr) slog.Attr, loggerAttr []slog.Attr, groups []string, record *slog.Record) map[string]any {

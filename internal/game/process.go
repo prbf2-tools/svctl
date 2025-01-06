@@ -2,10 +2,13 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -31,7 +34,14 @@ func (s *Server) Start() error {
 		return err
 	}
 
-	return s.storeProcessPID(proc.Pid)
+	pid := proc.Pid
+
+	err = proc.Release()
+	if err != nil {
+		return err
+	}
+
+	return s.storeProcessPID(pid)
 }
 
 func (s *Server) Stop() error {
@@ -54,7 +64,13 @@ func (s *Server) Stop() error {
 
 func (s *Server) IsRunning() bool {
 	if s.processPID == nil {
-		return false
+		err := s.retrieveProcessPID()
+		if err != nil {
+			fmt.Println(err)
+		}
+		if s.processPID == nil {
+			return false
+		}
 	}
 
 	// On Windows we need to check if the process isn't hanging on an error dialog.
@@ -68,7 +84,7 @@ func (s *Server) IsRunning() bool {
 
 	isRunning, err := s.isRunning()
 	if err != nil || !isRunning {
-		s.clearProcessPID()
+		_ = s.clearProcessPID()
 		return false
 	}
 
@@ -85,8 +101,13 @@ func (s *Server) isRunning() (bool, error) {
 		return false, err
 	}
 
-	if s.processExe() != processExe {
+	if s.processExe() != filepath.Join(s.Path, binaryDir, processExe) {
 		return false, nil
+	}
+
+	status, err := proc.Status()
+	if err != nil || slices.Contains(status, "zombie") {
+		return false, err
 	}
 
 	isRunning, err := proc.IsRunning()
@@ -101,6 +122,24 @@ func (s *Server) clearProcessPID() error {
 	s.processPID = nil
 
 	return os.Remove(filepath.Join(s.Path, pidFile))
+}
+
+func (s *Server) retrieveProcessPID() error {
+	content, err := os.ReadFile(filepath.Join(s.Path, pidFile))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	pid, err := strconv.Atoi(strings.TrimSpace(string(content)))
+	if err != nil {
+		return err
+	}
+
+	s.processPID = &pid
+	return nil
 }
 
 func (s *Server) storeProcessPID(pid int) error {

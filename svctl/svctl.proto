@@ -8,6 +8,7 @@ service Servers {
   rpc Start(ServerOpts) returns (ServerInfo) {}
   rpc Stop(ServerOpts) returns (ServerInfo) {}
   rpc Register(ServerOpts) returns (ServerInfo) {}
+  rpc Status(ServerOpts) returns (ServerInfo) {}
 }
 
 message ServerOpts {
@@ -16,13 +17,21 @@ message ServerOpts {
 }
 
 enum Status {
-  REGISTERED = 0;
-  STARTED = 1;
-  STOPPED = 2;
+  None = 0;
+  REGISTERED = 1;
+  STARTING = 2;
+  STOPPING = 3;
+}
+
+enum State {
+  STOPPED = 0;
+  RUNNING = 1;
 }
 
 message ServerInfo {
   string path = 1;
   string settingsPath = 2;
   Status status = 3;
+  State desired_state = 4;
+  State current_state = 5;
 }

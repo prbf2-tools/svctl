@@ -8,22 +8,22 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-type serverState string
+type ServerState string
 
 const (
-	running serverState = "running"
-	stopped serverState = "stopped"
+	Running ServerState = "running"
+	Stopped ServerState = "stopped"
 )
 
 type ServerInfo struct {
 	ServerPath   string      `yaml:"serverPath"`
 	SettingsPath string      `yaml:"settingsPath"`
-	CurrentState serverState `yaml:"currentState"`
+	DesiredState ServerState `yaml:"desiredState"`
 }
 
 type ServerManager struct {
-	Servers   map[string]*ServerInfo
-	cachePath string
+	ServersInfo map[string]*ServerInfo
+	cachePath   string
 }
 
 func NewServerManager(cachePath string) (*ServerManager, error) {
@@ -39,37 +39,37 @@ func NewServerManager(cachePath string) (*ServerManager, error) {
 	}
 
 	return &ServerManager{
-		Servers:   servers,
-		cachePath: cachePath,
+		ServersInfo: servers,
+		cachePath:   cachePath,
 	}, nil
 }
 
 func (m *ServerManager) AddServer(serverPath, settingsPath string) error {
-	if _, ok := m.Servers[serverPath]; ok {
+	if _, ok := m.ServersInfo[serverPath]; ok {
 		return fmt.Errorf("server %q already exists", serverPath)
 	}
 
-	m.Servers[serverPath] = &ServerInfo{
+	m.ServersInfo[serverPath] = &ServerInfo{
 		ServerPath:   serverPath,
 		SettingsPath: settingsPath,
-		CurrentState: stopped,
+		DesiredState: Stopped,
 	}
 
 	return m.Flush()
 }
 
-func (m *ServerManager) ChangeState(serverPath string, state serverState) error {
-	s, ok := m.Servers[serverPath]
+func (m *ServerManager) ChangeState(serverPath string, state ServerState) error {
+	s, ok := m.ServersInfo[serverPath]
 	if !ok {
 		return fmt.Errorf("server %q not found", serverPath)
 	}
 
-	s.CurrentState = state
+	s.DesiredState = state
 	return m.Flush()
 }
 
 func (m *ServerManager) Flush() error {
-	content, err := yaml.Marshal(m.Servers)
+	content, err := yaml.Marshal(m.ServersInfo)
 	if err != nil {
 		return err
 	}
