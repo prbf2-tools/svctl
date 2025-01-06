@@ -8,7 +8,8 @@ import (
 )
 
 type ValuesSource struct {
-	File string `yaml:"file"`
+	File   string         `yaml:"file"`
+	Values map[string]any `yaml:"values"`
 }
 
 type Config struct {

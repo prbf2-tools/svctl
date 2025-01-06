@@ -40,6 +40,11 @@ func (s *Settings) Values() (templates.Values, error) {
 			if err != nil {
 				return nil, err
 			}
+		} else if source.Values != nil {
+			err = mergo.Map(&allValues, source.Values, mergo.WithOverride)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
