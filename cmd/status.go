@@ -60,12 +60,17 @@ func (o *statusOpts) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	r, err := c.Status(ctx, &svctl.ServerOpts{Path: path})
+	status, err := c.Status(ctx, &svctl.ServerOpts{Path: path})
 	if err != nil {
 		return fmt.Errorf("error calling function Status: %v", err)
 	}
 
-	cmd.Printf("Server info: %v\n", r)
+	cmd.Printf("Server Info:\n")
+	cmd.Printf("  Path: %s\n", status.Path)
+	cmd.Printf("  Settings Path: %s\n", status.SettingsPath)
+	cmd.Printf("  Desired State: %v\n", status.DesiredState)
+	cmd.Printf("  Current State: %v\n", status.CurrentState)
+
 	return nil
 }
 
