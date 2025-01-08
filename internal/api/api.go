@@ -75,6 +75,15 @@ func (s *daemonServer) Status(ctx context.Context, opts *svctl.ServerOpts) (*svc
 	return info, nil
 }
 
+func (s *daemonServer) Reset(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
+	err := s.daemon.Reset(opts.GetPath())
+	if err != nil {
+		return nil, err
+	}
+
+	return s.fetchServerInfo(opts.GetPath())
+}
+
 func (s *daemonServer) fetchServerInfo(path string) (*svctl.ServerInfo, error) {
 	status, err := s.daemon.Status(path)
 	if err != nil {

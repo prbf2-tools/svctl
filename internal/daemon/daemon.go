@@ -137,6 +137,20 @@ func (s *Daemon) Stop(path string) error {
 	return sv.Event(fsm.EventStop)
 }
 
+func (s *Daemon) Reset(path string) error {
+	sv, err := s.findServer(path)
+	if err != nil {
+		return err
+	}
+
+	err = s.ServerManager.ChangeState(path, Stopped)
+	if err != nil {
+		return err
+	}
+
+	return sv.Event(fsm.EventReset)
+}
+
 type ServerStatus struct {
 	DesiredState ServerState
 	CurrentState ServerState
