@@ -33,7 +33,6 @@ func Open(path string) (*Settings, error) {
 
 	logger, err := NewLogger(
 		path, config.Loggers,
-		"settingsPath", path,
 	)
 	if err != nil {
 		return nil, err
