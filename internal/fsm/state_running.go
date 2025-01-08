@@ -57,7 +57,7 @@ func (s *StateRunning) OnEnter(fsm *FSM) {
 				}
 			default:
 				if !sv.IsRunning() {
-					log.Error("Server isn't running, attempting to restart")
+					log.Error("Server not running, attempting restart")
 					fsm.ChangeState(NewStateRestarting(s.counter))
 					ticker.Stop()
 					cancel()
