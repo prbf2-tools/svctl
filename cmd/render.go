@@ -8,7 +8,8 @@ import (
 
 type renderOpts struct {
 	*serverOpts
-	dryRun bool
+	dryRun         bool
+	reloadableOnly bool
 }
 
 func newRenderOpts() *renderOpts {
@@ -36,6 +37,7 @@ func renderCmd() *cobra.Command {
 	opts.serverOpts.AddFlags(cmd)
 
 	cmd.Flags().BoolVar(&opts.dryRun, "dry-run", false, "Print out rendered files")
+	cmd.Flags().BoolVar(&opts.reloadableOnly, "reloadable-only", false, "Only render reloadable templates")
 
 	return cmd
 }
@@ -55,11 +57,13 @@ func (opts *renderOpts) Run(cmd *cobra.Command) error {
 			fmt.Printf("File: %s\n---\n%s", out.Destination, string(out.Content))
 		}
 	} else {
-		err := sv.Render()
+		err := sv.Render(opts.reloadableOnly)
 		if err != nil {
 			return err
 		}
 	}
+
+	cmd.Println("Rendered templates.")
 
 	return nil
 }

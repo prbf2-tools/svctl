@@ -19,6 +19,7 @@ import (
 type MockGameServer struct {
 	ctrl     *gomock.Controller
 	recorder *MockGameServerMockRecorder
+	isgomock struct{}
 }
 
 // MockGameServerMockRecorder is the mock recorder for MockGameServer.
@@ -53,17 +54,17 @@ func (mr *MockGameServerMockRecorder) IsRunning() *gomock.Call {
 }
 
 // Render mocks base method.
-func (m *MockGameServer) Render() error {
+func (m *MockGameServer) Render(arg0 bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Render")
+	ret := m.ctrl.Call(m, "Render", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Render indicates an expected call of Render.
-func (mr *MockGameServerMockRecorder) Render() *gomock.Call {
+func (mr *MockGameServerMockRecorder) Render(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Render", reflect.TypeOf((*MockGameServer)(nil).Render))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Render", reflect.TypeOf((*MockGameServer)(nil).Render), arg0)
 }
 
 // Start mocks base method.

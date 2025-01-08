@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"context"
+	"log/slog"
 	"time"
 )
 
@@ -9,11 +10,12 @@ type GameServer interface {
 	Start() error
 	Stop() error
 	IsRunning() bool
-	Render() error
+	Render(bool) error
 }
 
 type FSM struct {
 	server GameServer
+	Log    *slog.Logger
 
 	currentState State
 	desiredState State
@@ -21,11 +23,18 @@ type FSM struct {
 	cancel context.CancelFunc
 }
 
-func New(server GameServer, initialState State) *FSM {
-	return &FSM{
-		currentState: initialState,
+func New(server GameServer, log *slog.Logger, initialState State) *FSM {
+	fsm := FSM{
+		currentState: &baseState{},
+		desiredState: initialState,
 		server:       server,
+		Log:          log,
 	}
+
+	fsm.Transition()
+	go fsm.Run()
+
+	return &fsm
 }
 
 func (f *FSM) Server() GameServer {
@@ -47,11 +56,7 @@ func (f *FSM) Event(event Event) error {
 		f.desiredState = nextState
 	}
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (f *FSM) Run() {
@@ -62,13 +67,13 @@ func (f *FSM) Run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	f.cancel = cancel
 
-	timer := time.NewTimer(500 * time.Millisecond)
+	ticker := time.NewTicker(500 * time.Millisecond)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-timer.C:
+		case <-ticker.C:
 			f.Transition()
 		}
 	}

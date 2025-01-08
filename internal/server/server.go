@@ -25,13 +25,17 @@ func Open(serverPath, settingsPath string) (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{
+	sv := &Server{
 		Server:   *g,
 		Settings: *s,
-	}, nil
+	}
+
+	sv.Log = sv.Log.With("server", filepath.Base(serverPath))
+
+	return sv, nil
 }
 
-func (s *Server) Render() error {
+func (s *Server) Render(reloadableOnly bool) error {
 	if s.Settings.Templates == nil {
 		return nil
 	}
@@ -47,6 +51,10 @@ func (s *Server) Render() error {
 	}
 
 	for _, output := range outputs {
+		if reloadableOnly && !output.Reloadable {
+			continue
+		}
+
 		dst := filepath.Join(s.Path, output.Destination)
 		err = os.MkdirAll(filepath.Dir(dst), 0755)
 		if err != nil {

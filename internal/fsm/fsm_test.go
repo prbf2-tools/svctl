@@ -1,6 +1,7 @@
 package fsm
 
 import (
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -16,7 +17,7 @@ func (s *FSMSuite) TestStartStop() {
 	gameServerMock := NewMockGameServer(ctrl)
 
 	state := NewStateStopped()
-	fsm := New(gameServerMock, state)
+	fsm := New(gameServerMock, slog.Default(), state)
 
 	gameServerMock.EXPECT().Start().Return(nil)
 

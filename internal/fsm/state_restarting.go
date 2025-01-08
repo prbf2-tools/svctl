@@ -22,20 +22,36 @@ func NewStateRestarting(counter *restartCounter) *StateRestarting {
 }
 
 func (s *StateRestarting) OnEnter(fsm *FSM) {
+	const op = "StateRestarting.OnEnter"
+	log := fsm.Log.With("op", op)
+
+	log.Debug("Restarting server")
+
 	if s.counter != nil {
 		s.counter.Increment()
 		if s.counter.LimitReached() {
+			log.Error("Max restarts limit reached")
 			fsm.ChangeState(NewStateErrored(ErrMaxRestartsReached))
 			return
 		}
 	}
 
-	err := fsm.Server().Start()
+	log.Info("Rendering templates")
+	err := fsm.Server().Render(false)
 	if err != nil {
+		log.Error("Failed to render templates", "err", err)
+	}
+
+	log.Info("Restarting server")
+
+	err = fsm.Server().Start()
+	if err != nil {
+		log.Error("Failed to restart server", "err", err)
 		fsm.ChangeState(NewStateErrored(err))
 		return
 	}
 
+	log.Info("Server successfully restarted")
 	fsm.ChangeState(NewStateRunning(s.counter))
 }
 

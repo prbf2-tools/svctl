@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"errors"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -17,7 +18,9 @@ func (s *StatesSuite) TestStateErrored() {
 	err := errors.New("test error")
 	state := NewStateErrored(err)
 
-	nextState, stateErr := state.EventHandler(EventReset, nil)
+	fsm := New(nil, slog.Default(), state)
+
+	nextState, stateErr := state.EventHandler(EventReset, fsm)
 	s.IsType(&StateStopped{}, nextState)
 	s.Equal(err, stateErr)
 }
@@ -27,7 +30,7 @@ func (s *StatesSuite) TestStateStopped() {
 	gameServerMock := NewMockGameServer(ctrl)
 
 	state := NewStateStopped()
-	fsm := New(gameServerMock, state)
+	fsm := New(gameServerMock, slog.Default(), state)
 
 	gameServerMock.EXPECT().Start().Return(nil)
 
@@ -47,12 +50,13 @@ func (s *StatesSuite) TestStateRunning() {
 	state := NewStateRunning(nil)
 	state.renderInterval = time.Second
 
-	fsm := New(gameServerMock, state)
+	gameServerMock.EXPECT().Render(true).Return(nil)
+	gameServerMock.EXPECT().IsRunning().Return(true).AnyTimes()
+	fsm := New(gameServerMock, slog.Default(), state)
 
 	s.Run("Render should be called", func() {
-		gameServerMock.EXPECT().IsRunning().Return(true).AnyTimes()
 		renderCalled := false
-		gameServerMock.EXPECT().Render().Return(nil).Do(func() {
+		gameServerMock.EXPECT().Render(true).Return(nil).Do(func(_ bool) {
 			renderCalled = true
 		})
 
@@ -102,9 +106,13 @@ func (s *StatesSuite) TestStateRestarting() {
 	gameServerMock := NewMockGameServer(ctrl)
 
 	state := NewStateRestarting(NewRestartCounter(3))
-	fsm := New(gameServerMock, state)
+
+	gameServerMock.EXPECT().Render(false).Return(nil)
+	gameServerMock.EXPECT().Start().Return(nil)
+	fsm := New(gameServerMock, slog.Default(), state)
 
 	s.Run("Succesfull restart", func() {
+		gameServerMock.EXPECT().Render(false).Return(nil)
 		gameServerMock.EXPECT().Start().Return(nil)
 		state.OnEnter(fsm)
 
@@ -112,8 +120,7 @@ func (s *StatesSuite) TestStateRestarting() {
 	})
 
 	s.Run("Failed restart", func() {
-		err := errors.New("test error")
-		gameServerMock.EXPECT().Start().Return(err)
+		err := errors.New("max restarts reached")
 		state.OnEnter(fsm)
 
 		s.IsType(&StateErrored{}, fsm.desiredState)

@@ -2,17 +2,24 @@ package settings
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"time"
 
 	slogmulti "github.com/samber/slog-multi"
 	slogwebhook "github.com/samber/slog-webhook/v2"
 )
 
 type DiscordLogger struct {
+	Endpoint  string `yaml:"endpoint"`
+	AvatarURL string `yaml:"avatarURL"`
+	Embed     bool   `yaml:"embed"`
+}
+
+type WebhookLogger struct {
 	Endpoint string `yaml:"endpoint"`
-	Embed    bool   `yaml:"embed"`
 }
 
 type logType string
@@ -34,11 +41,12 @@ type StdoutLogger struct {
 type LoggerConfig struct {
 	Level   slog.Level     `yaml:"level"`
 	Discord *DiscordLogger `yaml:"discord,omitempty"`
+	Webhook *WebhookLogger `yaml:"webhook,omitempty"`
 	File    *FileLogger    `yaml:"file,omitempty"`
 	Stdout  *StdoutLogger  `yaml:"std,omitempty"`
 }
 
-func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error) {
+func NewLogger(settingsPath string, loggers []LoggerConfig, with ...any) (*slog.Logger, error) {
 	var handlers []slog.Handler
 
 	for _, logger := range loggers {
@@ -55,6 +63,18 @@ func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error
 				option.Converter = DiscordTextConverter
 			}
 
+			h := option.NewWebhookHandler()
+			h = h.WithAttrs([]slog.Attr{{
+				Key:   "avatarURL",
+				Value: slog.StringValue(logger.Discord.AvatarURL),
+			}})
+
+			handlers = append(handlers, h)
+		case logger.Webhook != nil:
+			option := slogwebhook.Option{
+				Level:    logger.Level,
+				Endpoint: logger.Discord.Endpoint,
+			}
 			handlers = append(handlers, option.NewWebhookHandler())
 		case logger.File != nil:
 			path := logger.File.Path
@@ -95,15 +115,137 @@ func NewLogger(settingsPath string, loggers []LoggerConfig) (*slog.Logger, error
 		}
 	}
 
-	return slog.New(slogmulti.Fanout(handlers...)), nil
+	logger := slog.New(slogmulti.Fanout(handlers...)).With(with...)
+
+	return logger, nil
 }
 
+type discordField struct {
+	Name   string `json:"name"`
+	Value  string `json:"value"`
+	Inline bool   `json:"inline"`
+}
+
+type discordFooter struct {
+	Text string `json:"text"`
+}
+
+type discordEmbed struct {
+	Title       string         `json:"title"`
+	Type        string         `json:"type"`
+	Description string         `json:"description"`
+	URL         string         `json:"url"`
+	Timestamp   string         `json:"timestamp"`
+	Color       int            `json:"color"`
+	Footer      discordFooter  `json:"footer"`
+	Fields      []discordField `json:"fields"`
+}
+
+// type discordWebhookPayload struct {
+// 	Content   string         `json:"content"`
+// 	Username  string         `json:"username"`
+// 	AvatarURL string         `json:"avatar_url"`
+// 	Embeds    []discordEmbed `json:"embeds"`
+// }
+
 func DiscordEmbedConverter(addSource bool, replaceAttr func(groups []string, a slog.Attr) slog.Attr, loggerAttr []slog.Attr, groups []string, record *slog.Record) map[string]any {
-	return nil
+	embed := discordEmbed{
+		Title:       record.Level.String(),
+		Type:        "rich",
+		Description: record.Message,
+		Color:       levelToDiscorColor(record.Level),
+		Timestamp:   record.Time.Format(time.RFC3339),
+	}
+
+	record.Attrs(func(attr slog.Attr) bool {
+		if attr.Key == "op" {
+			embed.Footer = discordFooter{
+				Text: fmt.Sprint(attr.Value),
+			}
+			return true
+		}
+
+		embed.Fields = append(embed.Fields, discordField{
+			Name:  attr.Key,
+			Value: fmt.Sprint(attr.Value),
+		})
+		return true
+	})
+
+	avatarURL := ""
+	for _, attr := range loggerAttr {
+		if attr.Key == "avatarURL" {
+			avatarURL = fmt.Sprint(attr.Value)
+			continue
+		}
+
+		if attr.Key == "op" {
+			embed.Footer = discordFooter{
+				Text: fmt.Sprint(attr.Value),
+			}
+			continue
+		}
+
+		embed.Fields = append(embed.Fields, discordField{
+			Name:  attr.Key,
+			Value: fmt.Sprint(attr.Value),
+		})
+	}
+
+	return map[string]any{
+		"content":    recordToText(record, loggerAttr),
+		"embeds":     []discordEmbed{embed},
+		"avatar_url": avatarURL,
+	}
 }
 
 func DiscordTextConverter(addSource bool, replaceAttr func(groups []string, a slog.Attr) slog.Attr, loggerAttr []slog.Attr, groups []string, record *slog.Record) map[string]any {
-	return nil
+	text := recordToText(record, loggerAttr)
+
+	avatarURL := ""
+	for _, attr := range loggerAttr {
+		if attr.Key == "avatarURL" {
+			avatarURL = fmt.Sprint(attr.Value)
+			continue
+		}
+	}
+
+	return map[string]any{
+		"content":    text,
+		"avatar_url": avatarURL,
+	}
+}
+
+func recordToText(record *slog.Record, loggerAttr []slog.Attr) string {
+	text := fmt.Sprintf("time=%s level=%s msg=%s", record.Time.Format(time.RFC3339), record.Level, record.Message)
+	record.Attrs(func(attr slog.Attr) bool {
+		text += fmt.Sprintf(" %s=%v", attr.Key, attr.Value)
+		return true
+	})
+
+	for _, attr := range loggerAttr {
+		if attr.Key == "avatarURL" {
+			continue
+		}
+		text += fmt.Sprintf(" %s=%v", attr.Key, attr.Value)
+	}
+
+	return text
+}
+
+func levelToDiscorColor(level slog.Level) int {
+	switch level {
+	case slog.LevelDebug:
+		return 0x3498db
+	case slog.LevelInfo:
+		return 0x2ecc71
+	case slog.LevelWarn:
+		return 0xf1c40f
+	case slog.LevelError:
+		return 0xe74c3c
+	default:
+		return 0
+	}
 }
 
 func openOrCreateFile(path string) (*os.File, error) {

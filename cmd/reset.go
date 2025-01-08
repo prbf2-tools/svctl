@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -14,25 +11,27 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type registerOpts struct {
+type resetOpts struct {
 	*serverOpts
 	*daemonOpts
 }
 
-func newRegisterOpts() *registerOpts {
-	return &registerOpts{
+func newResetOpts() *resetOpts {
+	return &resetOpts{
 		serverOpts: newServerOpts(),
 		daemonOpts: newDaemonOpts(),
 	}
 }
 
-func registerCmd() *cobra.Command {
-	opts := newRegisterOpts()
+func resetCmd() *cobra.Command {
+	opts := newResetOpts()
 
 	cmd := &cobra.Command{
-		Use:   "register",
-		Short: "register a new user",
-		RunE:  opts.Run,
+		Use:          "reset",
+		Short:        "Resets the server",
+		Long:         `Send a reset signal to daemon to reset the server`,
+		SilenceUsage: true,
+		RunE:         opts.Run,
 	}
 
 	opts.AddFlags(cmd)
@@ -40,12 +39,12 @@ func registerCmd() *cobra.Command {
 	return cmd
 }
 
-func (o *registerOpts) AddFlags(cmd *cobra.Command) {
+func (o *resetOpts) AddFlags(cmd *cobra.Command) {
 	o.serverOpts.AddFlags(cmd)
 	o.daemonOpts.AddFlags(cmd)
 }
 
-func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
+func (o *resetOpts) Run(cmd *cobra.Command, args []string) error {
 	conn, err := grpc.Dial(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
@@ -61,23 +60,15 @@ func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	settingsPath, err := o.SettingsPath()
+	r, err := c.Reset(ctx, &svctl.ServerOpts{Path: path})
 	if err != nil {
-		return err
+		return fmt.Errorf("error calling function Reset: %v", err)
 	}
 
-	r, err := c.Register(ctx, &svctl.ServerOpts{
-		Path:         path,
-		SettingsPath: settingsPath,
-	})
-	if err != nil {
-		return fmt.Errorf("error calling function Register: %v", err)
-	}
-
-	cmd.Printf("Server status: %v\n", r.GetStatus().String())
+	cmd.Printf("Reseted completed: %v\n", r.GetStatus().String())
 	return nil
 }
 
 func init() {
-	rootCmd.AddCommand(registerCmd())
+	rootCmd.AddCommand(resetCmd())
 }

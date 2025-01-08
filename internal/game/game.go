@@ -4,8 +4,6 @@ import (
 	"context"
 	"io"
 	"os"
-	"path/filepath"
-	"strconv"
 )
 
 const (
@@ -23,12 +21,9 @@ func Open(path string) (*Server, error) {
 		Path: path,
 	}
 
-	content, err := os.ReadFile(filepath.Join(s.Path, pidFile))
-	if err == nil {
-		pid, err := strconv.Atoi(string(content))
-		if err == nil {
-			s.processPID = &pid
-		}
+	err := s.retrieveProcessPID()
+	if err != nil {
+		return nil, err
 	}
 
 	return s, nil
