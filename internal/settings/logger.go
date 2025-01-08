@@ -17,6 +17,10 @@ type DiscordLogger struct {
 	Embed    bool   `yaml:"embed"`
 }
 
+type WebhookLogger struct {
+	Endpoint string `yaml:"endpoint"`
+}
+
 type logType string
 
 const (
@@ -36,6 +40,7 @@ type StdoutLogger struct {
 type LoggerConfig struct {
 	Level   slog.Level     `yaml:"level"`
 	Discord *DiscordLogger `yaml:"discord,omitempty"`
+	Webhook *WebhookLogger `yaml:"webhook,omitempty"`
 	File    *FileLogger    `yaml:"file,omitempty"`
 	Stdout  *StdoutLogger  `yaml:"std,omitempty"`
 }
@@ -57,6 +62,12 @@ func NewLogger(settingsPath string, loggers []LoggerConfig, with ...any) (*slog.
 				option.Converter = DiscordTextConverter
 			}
 
+			handlers = append(handlers, option.NewWebhookHandler())
+		case logger.Webhook != nil:
+			option := slogwebhook.Option{
+				Level:    logger.Level,
+				Endpoint: logger.Discord.Endpoint,
+			}
 			handlers = append(handlers, option.NewWebhookHandler())
 		case logger.File != nil:
 			path := logger.File.Path
