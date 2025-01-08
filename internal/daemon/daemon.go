@@ -68,7 +68,7 @@ func Recover() (*Daemon, error) {
 
 		var machine *fsm.FSM
 		if s.IsRunning() {
-			machine = fsm.New(s, fsm.NewStateRunning(nil))
+			machine = fsm.New(s, s.Log, fsm.NewStateRunning(nil))
 			if sv.DesiredState == Stopped {
 				err := machine.Event(fsm.EventStop)
 				if err != nil {
@@ -77,7 +77,7 @@ func Recover() (*Daemon, error) {
 				}
 			}
 		} else {
-			machine = fsm.New(s, fsm.NewStateStopped())
+			machine = fsm.New(s, s.Log, fsm.NewStateStopped())
 			if sv.DesiredState == Running {
 				err := machine.Event(fsm.EventStart)
 				if err != nil {
@@ -104,7 +104,7 @@ func (s *Daemon) Register(serverPath, settingsPath string) error {
 		return err
 	}
 
-	s.Servers[serverPath] = fsm.New(sv, fsm.NewStateStopped())
+	s.Servers[serverPath] = fsm.New(sv, sv.Log, fsm.NewStateStopped())
 
 	return nil
 }

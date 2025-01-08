@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"errors"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -27,7 +28,7 @@ func (s *StatesSuite) TestStateStopped() {
 	gameServerMock := NewMockGameServer(ctrl)
 
 	state := NewStateStopped()
-	fsm := New(gameServerMock, state)
+	fsm := New(gameServerMock, slog.Default(), state)
 
 	gameServerMock.EXPECT().Start().Return(nil)
 
@@ -47,7 +48,7 @@ func (s *StatesSuite) TestStateRunning() {
 	state := NewStateRunning(nil)
 	state.renderInterval = time.Second
 
-	fsm := New(gameServerMock, state)
+	fsm := New(gameServerMock, slog.Default(), state)
 
 	s.Run("Render should be called", func() {
 		gameServerMock.EXPECT().IsRunning().Return(true).AnyTimes()
@@ -102,7 +103,7 @@ func (s *StatesSuite) TestStateRestarting() {
 	gameServerMock := NewMockGameServer(ctrl)
 
 	state := NewStateRestarting(NewRestartCounter(3))
-	fsm := New(gameServerMock, state)
+	fsm := New(gameServerMock, slog.Default(), state)
 
 	s.Run("Succesfull restart", func() {
 		gameServerMock.EXPECT().Start().Return(nil)

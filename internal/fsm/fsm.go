@@ -2,6 +2,7 @@ package fsm
 
 import (
 	"context"
+	"log/slog"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type GameServer interface {
 
 type FSM struct {
 	server GameServer
+	log    *slog.Logger
 
 	currentState State
 	desiredState State
@@ -21,11 +23,12 @@ type FSM struct {
 	cancel context.CancelFunc
 }
 
-func New(server GameServer, initialState State) *FSM {
+func New(server GameServer, log *slog.Logger, initialState State) *FSM {
 	fsm := FSM{
 		currentState: &baseState{},
 		desiredState: initialState,
 		server:       server,
+		log:          log,
 	}
 
 	fsm.Transition()
