@@ -31,7 +31,7 @@ func NewStateRunning(counter *restartCounter) *StateRunning {
 
 func (s *StateRunning) OnEnter(fsm *FSM) {
 	const op = "StateRunning.OnEnter"
-	log := fsm.log.With("op", op)
+	log := fsm.Log.With("op", op)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
@@ -49,7 +49,7 @@ func (s *StateRunning) OnEnter(fsm *FSM) {
 				return
 			case <-ticker.C:
 				log.Debug("Rendering templates")
-				sv.Render()
+				sv.Render(true)
 			default:
 				if !sv.IsRunning() {
 					log.Error("Server isn't running, attempting to restart")
@@ -71,7 +71,7 @@ func (s *StateRunning) OnExit() {
 
 func (s *StateRunning) EventHandler(event Event, fsm *FSM) (State, error) {
 	const op = "StateStopped.EventHandler"
-	log := fsm.log.With("op", op)
+	log := fsm.Log.With("op", op)
 	log.Debug("Received event", "event", event)
 
 	switch event {

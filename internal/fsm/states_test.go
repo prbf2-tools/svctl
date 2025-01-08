@@ -53,7 +53,7 @@ func (s *StatesSuite) TestStateRunning() {
 	s.Run("Render should be called", func() {
 		gameServerMock.EXPECT().IsRunning().Return(true).AnyTimes()
 		renderCalled := false
-		gameServerMock.EXPECT().Render().Return(nil).Do(func() {
+		gameServerMock.EXPECT().Render(true).Return(nil).Do(func() {
 			renderCalled = true
 		})
 

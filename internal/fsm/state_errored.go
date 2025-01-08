@@ -13,7 +13,7 @@ func NewStateErrored(err error) *StateErrored {
 
 func (s *StateErrored) EventHandler(event Event, fsm *FSM) (State, error) {
 	const op = "StateErrored.EventHandler"
-	log := fsm.log.With("op", op)
+	log := fsm.Log.With("op", op)
 	log.Debug("Received event", "event", event)
 
 	switch event {

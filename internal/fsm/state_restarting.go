@@ -23,7 +23,7 @@ func NewStateRestarting(counter *restartCounter) *StateRestarting {
 
 func (s *StateRestarting) OnEnter(fsm *FSM) {
 	const op = "StateRestarting.OnEnter"
-	log := fsm.log.With("op", op)
+	log := fsm.Log.With("op", op)
 
 	if s.counter != nil {
 		s.counter.Increment()

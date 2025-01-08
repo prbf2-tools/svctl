@@ -10,12 +10,12 @@ type GameServer interface {
 	Start() error
 	Stop() error
 	IsRunning() bool
-	Render() error
+	Render(bool) error
 }
 
 type FSM struct {
 	server GameServer
-	log    *slog.Logger
+	Log    *slog.Logger
 
 	currentState State
 	desiredState State
@@ -28,7 +28,7 @@ func New(server GameServer, log *slog.Logger, initialState State) *FSM {
 		currentState: &baseState{},
 		desiredState: initialState,
 		server:       server,
-		log:          log,
+		Log:          log,
 	}
 
 	fsm.Transition()
