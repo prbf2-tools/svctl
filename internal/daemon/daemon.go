@@ -121,6 +121,7 @@ func (s *Daemon) Start(path string) error {
 		return err
 	}
 
+	sv.Log.Info("Rendering templates", "op", "Daemon.Start")
 	err = sv.Server().Render(false)
 	if err != nil {
 		return err

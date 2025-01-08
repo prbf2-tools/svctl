@@ -33,6 +33,8 @@ func (s *StateRunning) OnEnter(fsm *FSM) {
 	const op = "StateRunning.OnEnter"
 	log := fsm.Log.With("op", op)
 
+	log.Debug("Server running")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
 
@@ -48,8 +50,11 @@ func (s *StateRunning) OnEnter(fsm *FSM) {
 				ticker.Stop()
 				return
 			case <-ticker.C:
-				log.Debug("Rendering templates")
-				sv.Render(true)
+				log.Debug("Rendering templates (reloadable)")
+				err := sv.Render(true)
+				if err != nil {
+					log.Error("Failed to render templates", "err", err)
+				}
 			default:
 				if !sv.IsRunning() {
 					log.Error("Server isn't running, attempting to restart")
@@ -76,13 +81,16 @@ func (s *StateRunning) EventHandler(event Event, fsm *FSM) (State, error) {
 
 	switch event {
 	case EventStop:
+		s.cancel()
 		if err := fsm.Server().Stop(); err != nil {
+			log.Error("Failed to stop server", "err", err)
 			return NewStateErrored(err), err
 		}
 
 		return NewStateStopped(), nil
 	case EventRestart:
 		if err := fsm.Server().Stop(); err != nil {
+			log.Error("Failed to restart server", "err", err)
 			return NewStateErrored(err), err
 		}
 

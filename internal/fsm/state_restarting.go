@@ -34,15 +34,22 @@ func (s *StateRestarting) OnEnter(fsm *FSM) {
 		}
 	}
 
-	log.Debug("Restarting server")
-
-	err := fsm.Server().Start()
+	log.Info("Rendering templates")
+	err := fsm.Server().Render(false)
 	if err != nil {
-		log.Error("Failed to start server", "err", err)
+		log.Error("Failed to render templates", "err", err)
+	}
+
+	log.Info("Restarting server")
+
+	err = fsm.Server().Start()
+	if err != nil {
+		log.Error("Failed to restart server", "err", err)
 		fsm.ChangeState(NewStateErrored(err))
 		return
 	}
 
+	log.Info("Server successfully restarted")
 	fsm.ChangeState(NewStateRunning(s.counter))
 }
 

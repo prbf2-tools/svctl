@@ -46,7 +46,6 @@ func (f *FSM) ChangeState(state State) {
 }
 
 func (f *FSM) Event(event Event) error {
-	println("event", event)
 	if f.currentState == nil {
 		return nil
 	}
