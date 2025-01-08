@@ -11,7 +11,6 @@ const (
 )
 
 type StateRunning struct {
-	baseState
 	counter        *restartCounter
 	renderInterval time.Duration
 

@@ -77,7 +77,7 @@ func (s *Server) IsRunning() bool {
 	if runtime.GOOS == "windows" {
 		health, err := processHealth(*s.processPID)
 		if err == nil && !health {
-			s.clearProcessPID()
+			_ = s.clearProcessPID()
 			return false
 		}
 	}

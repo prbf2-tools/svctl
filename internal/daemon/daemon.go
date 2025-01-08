@@ -15,8 +15,7 @@ const (
 )
 
 type Daemon struct {
-	cacheDir string
-	Servers  map[string]*fsm.FSM
+	Servers map[string]*fsm.FSM
 	ServerManager
 }
 
@@ -40,7 +39,6 @@ func New() (*Daemon, error) {
 
 	return &Daemon{
 		Servers:       make(map[string]*fsm.FSM),
-		cacheDir:      svctlCacheDir,
 		ServerManager: *serverManager,
 	}, nil
 }

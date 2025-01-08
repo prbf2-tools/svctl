@@ -3,7 +3,6 @@ package daemon
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/goccy/go-yaml"
 )
@@ -75,8 +74,4 @@ func (m *ServerManager) Flush() error {
 	}
 
 	return os.WriteFile(m.cachePath, content, 0644)
-}
-
-func (d *Daemon) cachePath(path string) string {
-	return filepath.Join(d.cacheDir, path)
 }
