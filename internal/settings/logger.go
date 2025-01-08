@@ -176,8 +176,13 @@ func DiscordEmbedConverter(addSource bool, replaceAttr func(groups []string, a s
 	for _, attr := range loggerAttr {
 		if attr.Key == "avatarURL" {
 			avatarURL = fmt.Sprint(attr.Value)
-			break
+			continue
 		}
+
+		embed.Fields = append(embed.Fields, discordField{
+			Name:  attr.Key,
+			Value: fmt.Sprint(attr.Value),
+		})
 	}
 
 	return map[string]any{
@@ -188,16 +193,20 @@ func DiscordEmbedConverter(addSource bool, replaceAttr func(groups []string, a s
 }
 
 func DiscordTextConverter(addSource bool, replaceAttr func(groups []string, a slog.Attr) slog.Attr, loggerAttr []slog.Attr, groups []string, record *slog.Record) map[string]any {
+	text := recordToText(record)
+
 	avatarURL := ""
 	for _, attr := range loggerAttr {
 		if attr.Key == "avatarURL" {
 			avatarURL = fmt.Sprint(attr.Value)
-			break
+			continue
 		}
+
+		text += fmt.Sprintf(" %s=%v", attr.Key, attr.Value)
 	}
 
 	return map[string]any{
-		"content":    recordToText(record),
+		"content":    text,
 		"avatar_url": avatarURL,
 	}
 }

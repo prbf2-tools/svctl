@@ -25,10 +25,14 @@ func Open(serverPath, settingsPath string) (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{
+	sv := &Server{
 		Server:   *g,
 		Settings: *s,
-	}, nil
+	}
+
+	sv.Log = sv.Log.With("server", filepath.Base(serverPath))
+
+	return sv, nil
 }
 
 func (s *Server) Render(reloadableOnly bool) error {

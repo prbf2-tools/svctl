@@ -115,19 +115,23 @@ func (s *Daemon) Start(path string) error {
 		return err
 	}
 
-	sv.Log.Info("Starting server", "op", "Daemon.Start")
 	err = s.ServerManager.ChangeState(path, Running)
 	if err != nil {
 		return err
 	}
 
-	sv.Log.Info("Rendering templates", "op", "Daemon.Start")
 	err = sv.Server().Render(false)
 	if err != nil {
 		return err
 	}
 
-	return sv.Event(fsm.EventStart)
+	err = sv.Event(fsm.EventStart)
+	if err != nil {
+		return err
+	}
+
+	sv.Log.Info("Server started", "op", "Daemon.Start")
+	return nil
 }
 
 func (s *Daemon) Stop(path string) error {
@@ -136,13 +140,18 @@ func (s *Daemon) Stop(path string) error {
 		return err
 	}
 
-	sv.Log.Info("Stopping server", "op", "Daemon.Stop")
 	err = s.ServerManager.ChangeState(path, Stopped)
 	if err != nil {
 		return err
 	}
 
-	return sv.Event(fsm.EventStop)
+	err = sv.Event(fsm.EventStop)
+	if err != nil {
+		return err
+	}
+
+	sv.Log.Info("Server stopped", "op", "Daemon.Stop")
+	return nil
 }
 
 func (s *Daemon) Reset(path string) error {
