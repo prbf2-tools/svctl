@@ -25,6 +25,8 @@ func (s *StateRestarting) OnEnter(fsm *FSM) {
 	const op = "StateRestarting.OnEnter"
 	log := fsm.Log.With("op", op)
 
+	log.Debug("Restarting server")
+
 	if s.counter != nil {
 		s.counter.Increment()
 		if s.counter.LimitReached() {

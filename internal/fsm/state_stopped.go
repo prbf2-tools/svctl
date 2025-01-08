@@ -12,7 +12,7 @@ func (s *StateStopped) OnEnter(fsm *FSM) {
 	const op = "StateStopped.OnEnter"
 	log := fsm.Log.With("op", op)
 
-	log.Info("Server stopped")
+	log.Debug("Server stopped")
 }
 
 func (s *StateStopped) EventHandler(event Event, fsm *FSM) (State, error) {

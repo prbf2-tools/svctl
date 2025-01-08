@@ -179,6 +179,13 @@ func DiscordEmbedConverter(addSource bool, replaceAttr func(groups []string, a s
 			continue
 		}
 
+		if attr.Key == "op" {
+			embed.Footer = discordFooter{
+				Text: fmt.Sprint(attr.Value),
+			}
+			continue
+		}
+
 		embed.Fields = append(embed.Fields, discordField{
 			Name:  attr.Key,
 			Value: fmt.Sprint(attr.Value),
@@ -186,14 +193,14 @@ func DiscordEmbedConverter(addSource bool, replaceAttr func(groups []string, a s
 	}
 
 	return map[string]any{
-		"content":    recordToText(record),
+		"content":    recordToText(record, loggerAttr),
 		"embeds":     []discordEmbed{embed},
 		"avatar_url": avatarURL,
 	}
 }
 
 func DiscordTextConverter(addSource bool, replaceAttr func(groups []string, a slog.Attr) slog.Attr, loggerAttr []slog.Attr, groups []string, record *slog.Record) map[string]any {
-	text := recordToText(record)
+	text := recordToText(record, loggerAttr)
 
 	avatarURL := ""
 	for _, attr := range loggerAttr {
@@ -201,8 +208,6 @@ func DiscordTextConverter(addSource bool, replaceAttr func(groups []string, a sl
 			avatarURL = fmt.Sprint(attr.Value)
 			continue
 		}
-
-		text += fmt.Sprintf(" %s=%v", attr.Key, attr.Value)
 	}
 
 	return map[string]any{
@@ -211,12 +216,20 @@ func DiscordTextConverter(addSource bool, replaceAttr func(groups []string, a sl
 	}
 }
 
-func recordToText(record *slog.Record) string {
+func recordToText(record *slog.Record, loggerAttr []slog.Attr) string {
 	text := fmt.Sprintf("time=%s level=%s msg=%s", record.Time.Format(time.RFC3339), record.Level, record.Message)
 	record.Attrs(func(attr slog.Attr) bool {
 		text += fmt.Sprintf(" %s=%v", attr.Key, attr.Value)
 		return true
 	})
+
+	for _, attr := range loggerAttr {
+		if attr.Key == "avatarURL" {
+			continue
+		}
+		text += fmt.Sprintf(" %s=%v", attr.Key, attr.Value)
+	}
+
 	return text
 }
 
