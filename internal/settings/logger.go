@@ -13,8 +13,9 @@ import (
 )
 
 type DiscordLogger struct {
-	Endpoint string `yaml:"endpoint"`
-	Embed    bool   `yaml:"embed"`
+	Endpoint  string `yaml:"endpoint"`
+	AvatarURL string `yaml:"avatarURL"`
+	Embed     bool   `yaml:"embed"`
 }
 
 type WebhookLogger struct {
@@ -62,7 +63,13 @@ func NewLogger(settingsPath string, loggers []LoggerConfig, with ...any) (*slog.
 				option.Converter = DiscordTextConverter
 			}
 
-			handlers = append(handlers, option.NewWebhookHandler())
+			h := option.NewWebhookHandler()
+			h = h.WithAttrs([]slog.Attr{{
+				Key:   "avatarURL",
+				Value: slog.StringValue(logger.Discord.AvatarURL),
+			}})
+
+			handlers = append(handlers, h)
 		case logger.Webhook != nil:
 			option := slogwebhook.Option{
 				Level:    logger.Level,
@@ -165,15 +172,33 @@ func DiscordEmbedConverter(addSource bool, replaceAttr func(groups []string, a s
 		return true
 	})
 
+	avatarURL := ""
+	for _, attr := range loggerAttr {
+		if attr.Key == "avatarURL" {
+			avatarURL = fmt.Sprint(attr.Value)
+			break
+		}
+	}
+
 	return map[string]any{
-		"content": recordToText(record),
-		"embeds":  []discordEmbed{embed},
+		"content":    recordToText(record),
+		"embeds":     []discordEmbed{embed},
+		"avatar_url": avatarURL,
 	}
 }
 
 func DiscordTextConverter(addSource bool, replaceAttr func(groups []string, a slog.Attr) slog.Attr, loggerAttr []slog.Attr, groups []string, record *slog.Record) map[string]any {
+	avatarURL := ""
+	for _, attr := range loggerAttr {
+		if attr.Key == "avatarURL" {
+			avatarURL = fmt.Sprint(attr.Value)
+			break
+		}
+	}
+
 	return map[string]any{
-		"content": recordToText(record),
+		"content":    recordToText(record),
+		"avatar_url": avatarURL,
 	}
 }
 
