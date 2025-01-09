@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strings"
 	"time"
 
 	strftime "github.com/ncruces/go-strftime"
@@ -38,6 +39,13 @@ const (
 	ArtifactTypePRDemoPrivate
 )
 
+type Artifact struct {
+	Name    string
+	State   ArtifactState
+	Type    ArtifactType
+	Created time.Time
+}
+
 // chatlog, newest appends
 // adminlog appending
 // joinlog appending
@@ -51,7 +59,8 @@ const (
 // prdemo_private newest file
 
 const (
-	raConfigFile = "mods/pr/python/game/realityconfig_admin.py"
+	raConfigFile      = "mods/pr/python/game/realityconfig_admin.py"
+	trackerConfigFile = "mods/pr/python/game/realityconfig_tracker.py"
 )
 
 type source struct {
@@ -187,49 +196,70 @@ const (
 )
 
 func generateConfig(path string) (map[ArtifactType]artifactConfig, error) {
-	config := make(map[ArtifactType]artifactConfig)
+	configMap := make(map[ArtifactType]artifactConfig)
 
 	content, err := os.ReadFile(filepath.Join(path, raConfigFile))
 	if err != nil {
 		return nil, err
 	}
+
+	contentStr := string(content)
 
 	for typ, sourceConfig := range realityConfigAdminSource {
+		config := artifactConfig{}
+		if sourceConfig.Path.Value != "" {
+			config.Path = sourceConfig.Path.Value
+		} else {
+			config.Path = extractWithPattern(contentStr, fmt.Sprintf(raConfigFilePattern, sourceConfig.Path.VariableName))
+		}
 
+		if sourceConfig.File.Value != "" {
+			config.File = sourceConfig.File.Value
+		} else {
+			config.File = extractWithPattern(contentStr, fmt.Sprintf(raConfigFilePattern, sourceConfig.File.VariableName))
+		}
+
+		config.Path = strings.ReplaceAll(config.Path, "[MOD]", path)
+
+		configMap[typ] = config
 	}
 
-	return config, nil
-}
-
-func getArtifactsConfig(path string) (*artifactsConfig, error) {
-	config := make(map[ArtifactType]artifactConfig)
-
-	content, err := os.ReadFile(filepath.Join(path, raConfigFile))
+	content, err = os.ReadFile(filepath.Join(path, trackerConfigFile))
 	if err != nil {
 		return nil, err
 	}
 
-	fileContent := string(content)
+	contentStr = string(content)
 
-	// Match variables
-	for _, variable := range variables {
-		pattern := fmt.Sprintf(regexPattern, variable)
-		re := regexp.MustCompile(pattern)
-		matches := re.FindStringSubmatch(fileContent)
-		if len(matches) > 2 {
-			fmt.Printf("%s = %s\n", matches[1], matches[2])
+	for typ, sourceConfig := range realityConfigTrackerSource {
+		config := artifactConfig{}
+		if sourceConfig.Path.Value != "" {
+			config.Path = sourceConfig.Path.Value
 		} else {
-			fmt.Printf("%s not found\n", variable)
+			config.Path = extractWithPattern(contentStr, fmt.Sprintf(rtConfigFilePattern, sourceConfig.Path.VariableName))
 		}
+
+		if sourceConfig.File.Value != "" {
+			config.File = sourceConfig.File.Value
+		} else {
+			config.File = extractWithPattern(contentStr, fmt.Sprintf(rtConfigFilePattern, sourceConfig.File.VariableName))
+		}
+
+		config.Path = strings.ReplaceAll(config.Path, "[MOD]", path)
+
+		configMap[typ] = config
 	}
 
+	return configMap, nil
 }
 
-type Artifact struct {
-	Name    string
-	State   ArtifactState
-	Type    ArtifactType
-	Created time.Time
+func extractWithPattern(content string, pattern string) string {
+	re := regexp.MustCompile(pattern)
+	matches := re.FindStringSubmatch(content)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
 }
 
 func (s *Server) listChatLogs() ([]Artifact, error) {

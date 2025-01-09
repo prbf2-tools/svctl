@@ -3,7 +3,6 @@ package game
 import (
 	"context"
 	"io"
-	"os"
 )
 
 const (
