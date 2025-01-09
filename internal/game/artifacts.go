@@ -21,24 +21,6 @@ const (
 	ArtifactStateFinished
 )
 
-type ArtifactType int
-
-const (
-	ArtifactTypeChatLog ArtifactType = 1 << iota
-	ArtifactTypeCoincidentIPsLog
-	ArtifactTypeAdminLog
-	ArtifactTypeBanLog
-	ArtifactTypeTicketsLog
-	ArtifactTypeJoinLog
-	ArtifactTypePlayerProfilesLog
-	ArtifactPlayerDataErrorsLog
-	ArtifactTypePythonErrorLog
-	ArtifactTypePythonLaunchErrorLog
-	ArtifactTypeBF2Demo
-	ArtifactTypePRDemo
-	ArtifactTypePRDemoPrivate
-)
-
 type Artifact struct {
 	Name    string
 	State   ArtifactState
@@ -59,8 +41,9 @@ type Artifact struct {
 // prdemo_private newest file
 
 const (
-	raConfigFile      = "mods/pr/python/game/realityconfig_admin.py"
-	trackerConfigFile = "mods/pr/python/game/realityconfig_tracker.py"
+	modPath           = "mods/pr"
+	raConfigFile      = modPath + "/python/game/realityconfig_admin.py"
+	trackerConfigFile = modPath + "/python/game/realityconfig_tracker.py"
 )
 
 type source struct {
@@ -191,8 +174,8 @@ type artifactConfig struct {
 }
 
 const (
-	raConfigFilePattern = `^\s*%s\s*=\s*"(.*?)"`
-	rtConfigFilePattern = `^\s*C\['%s'\]\s*=\s*'(.*?)'`
+	raConfigFilePattern = `(?m)^\s*%s\s*=\s*"(.*?)"`
+	rtConfigFilePattern = `(?m)^\s*C\['%s'\]\s*=\s*'(.*?)'`
 )
 
 func generateConfig(path string) (map[ArtifactType]artifactConfig, error) {
@@ -219,7 +202,7 @@ func generateConfig(path string) (map[ArtifactType]artifactConfig, error) {
 			config.File = extractWithPattern(contentStr, fmt.Sprintf(raConfigFilePattern, sourceConfig.File.VariableName))
 		}
 
-		config.Path = strings.ReplaceAll(config.Path, "[MOD]", path)
+		config.Path = strings.ReplaceAll(config.Path, "[MOD]", modPath)
 
 		configMap[typ] = config
 	}
@@ -245,7 +228,7 @@ func generateConfig(path string) (map[ArtifactType]artifactConfig, error) {
 			config.File = extractWithPattern(contentStr, fmt.Sprintf(rtConfigFilePattern, sourceConfig.File.VariableName))
 		}
 
-		config.Path = strings.ReplaceAll(config.Path, "[MOD]", path)
+		config.Path = strings.ReplaceAll(config.Path, "[MOD]", modPath)
 
 		configMap[typ] = config
 	}
