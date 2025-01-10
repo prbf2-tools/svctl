@@ -5,28 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"strings"
-	"time"
-
-	strftime "github.com/ncruces/go-strftime"
 )
-
-type ArtifactState int
-
-const (
-	ArtifactStateUnknown ArtifactState = iota
-	ArtifactStateAppending
-	ArtifactStateStopped
-	ArtifactStateFinished
-)
-
-type Artifact struct {
-	Name    string
-	State   ArtifactState
-	Type    ArtifactType
-	Created time.Time
-}
 
 // chatlog, newest appends
 // adminlog appending
@@ -178,10 +158,10 @@ const (
 	rtConfigFilePattern = `(?m)^\s*C\['%s'\]\s*=\s*'(.*?)'`
 )
 
-func generateConfig(path string) (map[ArtifactType]artifactConfig, error) {
+func (s *Server) ArtifactsConfig() (map[ArtifactType]artifactConfig, error) {
 	configMap := make(map[ArtifactType]artifactConfig)
 
-	content, err := os.ReadFile(filepath.Join(path, raConfigFile))
+	content, err := os.ReadFile(filepath.Join(s.Path, raConfigFile))
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +187,7 @@ func generateConfig(path string) (map[ArtifactType]artifactConfig, error) {
 		configMap[typ] = config
 	}
 
-	content, err = os.ReadFile(filepath.Join(path, trackerConfigFile))
+	content, err = os.ReadFile(filepath.Join(s.Path, trackerConfigFile))
 	if err != nil {
 		return nil, err
 	}
@@ -245,41 +225,41 @@ func extractWithPattern(content string, pattern string) string {
 	return ""
 }
 
-func (s *Server) listChatLogs() ([]Artifact, error) {
-	dir := filepath.Join(s.Path, "admin/logs")
-
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	filenameFormat := "chatlog_%Y-%m-%d_%H%Ms.txt"
-
-	layout, err := strftime.Layout(filenameFormat)
-	if err != nil {
-		return nil, err
-	}
-
-	logs := make([]Artifact, 0, len(entries))
-	for _, entry := range entries {
-		t, err := time.Parse(layout, entry.Name())
-		if err != nil {
-			continue
-		}
-
-		logs = append(logs, Artifact{
-			Name:    entry.Name(),
-			State:   ArtifactStateFinished,
-			Type:    ArtifactTypeChatLog,
-			Created: t,
-		})
-	}
-
-	slices.SortFunc(logs, func(a, b Artifact) int {
-		return int(a.Created.Sub(b.Created))
-	})
-
-	// TODO: on running server mark last as appending
-
-	return logs, nil
-}
+// func (s *Server) listChatLogs() ([]Artifact, error) {
+// 	dir := filepath.Join(s.Path, "admin/logs")
+//
+// 	entries, err := os.ReadDir(dir)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	filenameFormat := "chatlog_%Y-%m-%d_%H%Ms.txt"
+//
+// 	layout, err := strftime.Layout(filenameFormat)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+//
+// 	logs := make([]Artifact, 0, len(entries))
+// 	for _, entry := range entries {
+// 		t, err := time.Parse(layout, entry.Name())
+// 		if err != nil {
+// 			continue
+// 		}
+//
+// 		logs = append(logs, Artifact{
+// 			Name:    entry.Name(),
+// 			State:   ArtifactStateFinished,
+// 			Type:    ArtifactTypeChatLog,
+// 			Created: t,
+// 		})
+// 	}
+//
+// 	slices.SortFunc(logs, func(a, b Artifact) int {
+// 		return int(a.Created.Sub(b.Created))
+// 	})
+//
+// 	// TODO: on running server mark last as appending
+//
+// 	return logs, nil
+// }

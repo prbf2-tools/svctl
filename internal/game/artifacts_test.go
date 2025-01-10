@@ -9,7 +9,10 @@ import (
 func TestGenerateConfig(t *testing.T) {
 	path := "./testdata"
 
-	generatedConfig, err := generateConfig(path)
+	sv, err := Open(path)
+	require.NoError(t, err)
+
+	generatedConfig, err := sv.ArtifactsConfig()
 	require.NoError(t, err)
 
 	expectedConfig := map[ArtifactType]artifactConfig{
