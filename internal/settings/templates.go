@@ -25,7 +25,12 @@ func (s *Settings) Values() (templates.Values, error) {
 
 	for _, source := range config.Values {
 		if source.File != "" {
-			content, err := os.ReadFile(filepath.Join(s.path, source.File))
+			sourceFile := source.File
+			if !filepath.IsAbs(sourceFile) {
+				sourceFile = filepath.Join(s.path, sourceFile)
+			}
+
+			content, err := os.ReadFile(sourceFile)
 			if err != nil {
 				return nil, err
 			}
