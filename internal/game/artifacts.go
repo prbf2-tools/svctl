@@ -39,111 +39,59 @@ type artifactSourceConfig struct {
 var (
 	realityConfigAdminSource = map[ArtifactType]artifactSourceConfig{
 		ArtifactTypeChatLog: {
-			Path: source{
-				VariableName: "log_chat_path",
-			},
-			File: source{
-				VariableName: "log_chat_file",
-			},
+			Path: source{VariableName: "log_chat_path"},
+			File: source{VariableName: "log_chat_file"},
 		},
 		ArtifactTypeCoincidentIPsLog: {
-			Path: source{
-				VariableName: "log_IP_coincidence_path",
-			},
-			File: source{
-				VariableName: "log_IP_coincidence_file",
-			},
+			Path: source{VariableName: "log_IP_coincidence_path"},
+			File: source{VariableName: "log_IP_coincidence_file"},
 		},
 		ArtifactTypeAdminLog: {
-			Path: source{
-				VariableName: "log_admins_path",
-			},
-			File: source{
-				VariableName: "log_admins_file",
-			},
+			Path: source{VariableName: "log_admins_path"},
+			File: source{VariableName: "log_admins_file"},
 		},
 		ArtifactTypeBanLog: {
-			Path: source{
-				VariableName: "log_bans_path",
-			},
-			File: source{
-				VariableName: "log_bans_file",
-			},
+			Path: source{VariableName: "log_bans_path"},
+			File: source{VariableName: "log_bans_file"},
 		},
 		ArtifactTypeTicketsLog: {
-			Path: source{
-				VariableName: "log_tickets_path",
-			},
-			File: source{
-				VariableName: "log_tickets_file",
-			},
+			Path: source{VariableName: "log_tickets_path"},
+			File: source{VariableName: "log_tickets_file"},
 		},
 		ArtifactTypeJoinLog: {
-			Path: source{
-				Value: "admin/logs",
-			},
-			File: source{
-				Value: "joinlog.log",
-			},
+			Path: source{Value: "admin/logs"},
+			File: source{Value: "joinlog.log"},
 		},
 		ArtifactTypePlayerProfilesLog: {
-			Path: source{
-				Value: "admin/logs",
-			},
-			File: source{
-				Value: "playerprofiles.log",
-			},
+			Path: source{Value: "admin/logs"},
+			File: source{Value: "playerprofiles.log"},
 		},
 		ArtifactPlayerDataErrorsLog: {
-			Path: source{
-				Value: "admin/logs",
-			},
-			File: source{
-				Value: "playerdataerrors.log",
-			},
+			Path: source{Value: "admin/logs"},
+			File: source{Value: "playerdataerrors.log"},
 		},
 		ArtifactTypePythonErrorLog: {
-			Path: source{
-				Value: "[MOD]/settings",
-			},
-			File: source{
-				Value: "python_errors_v([0-9]+.[0-9]+.[0-9]+.[0-9]+).log",
-			},
+			Path: source{Value: "[MOD]/settings"},
+			File: source{Value: "python_errors_v([0-9]+.[0-9]+.[0-9]+.[0-9]+).log"},
 		},
 		ArtifactTypePythonLaunchErrorLog: {
-			Path: source{
-				Value: "[MOD]/settings",
-			},
-			File: source{
-				Value: "python_launch_error.log",
-			},
+			Path: source{Value: "[MOD]/settings"},
+			File: source{Value: "python_launch_error.log"},
 		},
 	}
 
 	realityConfigTrackerSource = map[ArtifactType]artifactSourceConfig{
 		ArtifactTypeBF2Demo: {
-			Path: source{
-				Value: "[MOD]/demos",
-			},
-			File: source{
-				Value: "demo_%Y_%m_%d_%H_%M_%S_/map_/mode_/layer",
-			},
+			Path: source{Value: "[MOD]/demos"},
+			File: source{Value: "demo_%Y_%m_%d_%H_%M_%S_/map_/mode_/layer"},
 		},
 		ArtifactTypePRDemo: {
-			Path: source{
-				VariableName: "PUBLIC_FOLDER",
-			},
-			File: source{
-				VariableName: "FILE_NAME",
-			},
+			Path: source{VariableName: "PUBLIC_FOLDER"},
+			File: source{VariableName: "FILE_NAME"},
 		},
 		ArtifactTypePRDemoPrivate: {
-			Path: source{
-				VariableName: "PRIVATE_FOLDER",
-			},
-			File: source{
-				VariableName: "FILE_NAME",
-			},
+			Path: source{VariableName: "PRIVATE_FOLDER"},
+			File: source{VariableName: "FILE_NAME"},
 		},
 	}
 )
