@@ -15,58 +15,22 @@ func TestGenerateConfig(t *testing.T) {
 	generatedConfig, err := sv.ArtifactsConfig()
 	require.NoError(t, err)
 
-	expectedConfig := map[ArtifactType]artifactConfig{
-		ArtifactTypeChatLog: {
-			Path: "admin/logs",
-			File: "chatlog_%Y-%m-%d_%H%M.txt",
-		},
-		ArtifactTypeCoincidentIPsLog: {
-			Path: "mods/pr/settings/",
-			File: "IPcoincidences.log",
-		},
-		ArtifactTypeAdminLog: {
-			Path: "admin/logs",
-			File: "ra_adminlog.txt",
-		},
-		ArtifactTypeBanLog: {
-			Path: "mods/pr/settings/",
-			File: "banlist_info.log",
-		},
-		ArtifactTypeTicketsLog: {
-			Path: "admin/logs",
-			File: "tickets.log",
-		},
-		ArtifactTypeJoinLog: {
-			Path: "admin/logs",
-			File: "joinlog.log",
-		},
-		ArtifactTypePlayerProfilesLog: {
-			Path: "admin/logs",
-			File: "playerprofiles.log",
-		},
-		ArtifactPlayerDataErrorsLog: {
-			Path: "admin/logs",
-			File: "playerdataerrors.log",
-		},
-		ArtifactTypePythonErrorLog: {
-			Path: "mods/pr/settings",
-			File: "python_errors_v([0-9]+.[0-9]+.[0-9]+.[0-9]+).log",
-		},
-		ArtifactTypePythonLaunchErrorLog: {
-			Path: "mods/pr/settings",
-			File: "python_launch_error.log",
-		},
+	expectedConfig := map[ArtifactType]ArtifactConfig{
 		ArtifactTypeBF2Demo: {
 			Path: "mods/pr/demos",
-			File: "demo_%Y_%m_%d_%H_%M_%S_/map_/mode_/layer",
+			File: "auto_%Y_%m_%d_%H_%M_%S.bf2demo",
 		},
 		ArtifactTypePRDemo: {
 			Path: "demos",
-			File: "tracker_%Y_%m_%d_%H_%M_%S_/map_/mode_/layer",
+			File: "tracker_%Y_%m_%d_%H_%M_%S_/map_/mode_/layer.PRdemo",
 		},
 		ArtifactTypePRDemoPrivate: {
 			Path: "demos_private",
-			File: "tracker_%Y_%m_%d_%H_%M_%S_/map_/mode_/layer",
+			File: "tracker_%Y_%m_%d_%H_%M_%S_/map_/mode_/layer.p.PRdemo",
+		},
+		ArtifactTypeJSONSummary: {
+			Path: "json",
+			File: "tracker_%Y_%m_%d_%H_%M_%S_/map_/mode_/layer.json",
 		},
 	}
 	require.Equal(t, expectedConfig, generatedConfig)
