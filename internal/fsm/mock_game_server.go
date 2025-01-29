@@ -12,6 +12,7 @@ package fsm
 import (
 	reflect "reflect"
 
+	game "github.com/sboon-gg/svctl/internal/game"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -79,6 +80,21 @@ func (m *MockGameServer) Start() error {
 func (mr *MockGameServerMockRecorder) Start() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockGameServer)(nil).Start))
+}
+
+// Status mocks base method.
+func (m *MockGameServer) Status() (*game.Status, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Status")
+	ret0, _ := ret[0].(*game.Status)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Status indicates an expected call of Status.
+func (mr *MockGameServerMockRecorder) Status() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockGameServer)(nil).Status))
 }
 
 // Stop mocks base method.

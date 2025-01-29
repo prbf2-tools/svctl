@@ -90,12 +90,26 @@ func (s *daemonServer) fetchServerInfo(path string) (*svctl.ServerInfo, error) {
 		return nil, err
 	}
 
-	return &svctl.ServerInfo{
+	info := &svctl.ServerInfo{
 		Path:         path,
 		SettingsPath: status.SettingsPath,
 		DesiredState: serverStateToProto(status.DesiredState),
 		CurrentState: serverStateToProto(status.CurrentState),
-	}, nil
+	}
+
+	if status.GameStatus != nil {
+		info.GameStatus = &svctl.GameStatus{
+			Hostname:   status.GameStatus.Hostname,
+			Port:       status.GameStatus.Port,
+			Gamemode:   status.GameStatus.GameMode,
+			MapName:    status.GameStatus.MapName,
+			MapSize:    int64(status.GameStatus.MapSize),
+			MaxPlayers: int64(status.GameStatus.MaxPlayers),
+			NumPlayers: int64(status.GameStatus.NumPlayers),
+		}
+	}
+
+	return info, nil
 }
 
 func serverStateToProto(state daemon.ServerState) svctl.State {
