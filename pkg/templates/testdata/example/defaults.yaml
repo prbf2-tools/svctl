@@ -8,3 +8,24 @@ maps:
     mode: gpm_cq
   - name: sahel
     layer: 64
+
+mapsRaw: |
+  mapList.append kashan_desert gpm_cq 16
+  mapList.append kashan_desert gpm_cq 32
+  mapList.append kashan_desert gpm_cq 64
+  mapList.append kashan_desert gpm_cq 128
+  mapList.append sahel gpm_cq 64
+  mapList.append sahel gpm_insurgency 64
+  mapList.append sahel gpm_skirmish 64
+  mapList.append sahel gpm_coop 64
+  mapList.append saaremaa gpm_cq 16
+  mapList.append saaremaa gpm_cq 32
+  mapList.append saaremaa gpm_cq 64
+  mapList.append saaremaa gpm_cq 128
+  mapList.append saaremaa gpm_skirmish 16
+  mapList.append saaremaa gpm_cnc 16
+  mapList.append saaremaa gpm_cnc 32
+  mapList.append saaremaa gpm_cnc 64
+  mapList.append saaremaa gpm_cnc 128
+  mapList.append saaremaa gpm_coop 32
+  mapList.append saaremaa gpm_coop 64

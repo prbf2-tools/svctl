@@ -7,7 +7,6 @@ import (
 	"text/template"
 
 	"dario.cat/mergo"
-	"github.com/sboon-gg/svctl/pkg/maplist"
 	"gopkg.in/yaml.v3"
 )
 
@@ -52,45 +51,32 @@ func ReadConfig(dir fs.FS) (*Config, error) {
 	return &conf, nil
 }
 
-type Option func(*Renderer)
-
-func WithMaps(maps []maplist.MapInfo) Option {
-	return func(r *Renderer) {
-		r.maps = maps
-	}
-}
-
 type Renderer struct {
 	config *Config
 	files  fs.FS
-	maps   []maplist.MapInfo
 }
 
-func New(config *Config, files fs.FS, opts ...Option) *Renderer {
+func New(config *Config, files fs.FS) *Renderer {
 	r := &Renderer{
 		config: config,
 		files:  files,
 	}
 
-	for _, opt := range opts {
-		opt(r)
-	}
-
 	return r
 }
 
-func NewFromPath(path string, opts ...Option) (*Renderer, error) {
+func NewFromPath(path string) (*Renderer, error) {
 	dir := os.DirFS(path)
-	return NewFromFS(dir, opts...)
+	return NewFromFS(dir)
 }
 
-func NewFromFS(files fs.FS, opts ...Option) (*Renderer, error) {
+func NewFromFS(files fs.FS) (*Renderer, error) {
 	conf, err := ReadConfig(files)
 	if err != nil {
 		return nil, err
 	}
 
-	return New(conf, files, opts...), nil
+	return New(conf, files), nil
 }
 
 func (t *Renderer) template(name, tplContent string) (*template.Template, error) {
@@ -112,7 +98,7 @@ func (t *Renderer) prepData(values Values) (*Data, error) {
 		return nil, err
 	}
 
-	err = mergo.Map(&data.Values, values, mergo.WithOverride)
+	err = mergo.Map(&data.Values, values, mergo.WithAppendSlice, mergo.WithOverride)
 	if err != nil {
 		return nil, err
 	}

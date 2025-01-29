@@ -8,16 +8,15 @@ import (
 	"strings"
 )
 
-//go:embed maplist.con
-var defaultSource []byte
+const (
+	MaplistAppendStr = "mapList.append"
+)
 
 type MapInfo struct {
 	Name  string `json:"name"`
 	Mode  string `json:"mode"`
 	Layer int    `json:"layer"`
 }
-
-var DefaultMapList = Parse(string(defaultSource))
 
 func Parse(maplistContent string) []MapInfo {
 	reader := strings.NewReader(maplistContent)
@@ -28,7 +27,7 @@ func Parse(maplistContent string) []MapInfo {
 	for scanner.Scan() {
 		text := scanner.Text()
 
-		if !strings.HasPrefix(text, "mapList.append") {
+		if !strings.HasPrefix(text, MaplistAppendStr) {
 			continue
 		}
 

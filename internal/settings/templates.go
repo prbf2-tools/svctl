@@ -36,12 +36,12 @@ func (s *Settings) Values() (templates.Values, error) {
 				return nil, err
 			}
 
-			err = mergo.Map(&allValues, values, mergo.WithOverride)
+			err = mergo.Map(&allValues, values, mergo.WithAppendSlice, mergo.WithOverride)
 			if err != nil {
 				return nil, err
 			}
 		} else if source.Values != nil {
-			err = mergo.Map(&allValues, source.Values, mergo.WithOverride)
+			err = mergo.Map(&allValues, source.Values, mergo.WithAppendSlice, mergo.WithOverride)
 			if err != nil {
 				return nil, err
 			}

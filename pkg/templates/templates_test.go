@@ -4,7 +4,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/sboon-gg/svctl/pkg/maplist"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,8 +49,8 @@ mapList.append sahel gpm_coop 64
 				"test":                  "changed-string",
 				"quoted":                "but different",
 				"overriddenByZeroValue": 0,
-				"maps": []map[string]interface{}{
-					{
+				"maps": []interface{}{
+					map[string]interface{}{
 						"name": "saaremaa",
 					},
 				},
@@ -72,7 +71,15 @@ mapList.append sahel gpm_coop 64
 						Source:      "maplist.con.tpl",
 						Destination: "maplist.con",
 					},
-					Content: []byte(`mapList.append saaremaa gpm_cq 16
+					Content: []byte(`mapList.append kashan_desert gpm_cq 16
+mapList.append kashan_desert gpm_cq 32
+mapList.append kashan_desert gpm_cq 64
+mapList.append kashan_desert gpm_cq 128
+mapList.append sahel gpm_cq 64
+mapList.append sahel gpm_insurgency 64
+mapList.append sahel gpm_skirmish 64
+mapList.append sahel gpm_coop 64
+mapList.append saaremaa gpm_cq 16
 mapList.append saaremaa gpm_cq 32
 mapList.append saaremaa gpm_cq 64
 mapList.append saaremaa gpm_cq 128
@@ -96,7 +103,7 @@ mapList.append saaremaa gpm_coop 64
 				defer os.Unsetenv(k)
 			}
 
-			tmpl, err := NewFromPath("./testdata/example", WithMaps(maplist.DefaultMapList))
+			tmpl, err := NewFromPath("./testdata/example")
 			assert.NoError(t, err)
 
 			out, err := tmpl.Render(test.values)

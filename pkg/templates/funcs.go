@@ -28,23 +28,26 @@ func (r *Renderer) FuncMap() template.FuncMap {
 	return f
 }
 
-func (t *Renderer) maplist(filterMap map[string]any) (string, error) {
-	c, err := json.Marshal(filterMap)
-	if err != nil {
-		return "", errors.Join(errors.New("failed to marshal filter map"), err)
-	}
+func (t *Renderer) maplist(filterMap interface{}, rawMaplist string) (string, error) {
+	fmt.Printf("filterMap: %T\n", filterMap)
 
 	var filter maplist.MapInfo
+	if f, ok := filterMap.(string); ok {
+		filter = maplist.Parse(fmt.Sprintf("%s %s", maplist.MaplistAppendStr, f))[0]
+	} else {
+		c, err := json.Marshal(filterMap)
+		if err != nil {
+			return "", errors.Join(errors.New("failed to marshal filter map"), err)
+		}
 
-	if err := json.Unmarshal(c, &filter); err != nil {
-		return "", errors.Join(errors.New("failed to unmarshal filter"), err)
+		if err := json.Unmarshal(c, &filter); err != nil {
+			return "", errors.Join(errors.New("failed to unmarshal filter"), err)
+		}
 	}
 
-	allMaps := make([]maplist.MapInfo, 0)
-	// for _, f := range filter {
-	allMaps = append(allMaps, maplist.Filter(t.maps, filter)...)
-
-	return maplist.Compose(allMaps), nil
+	return maplist.Compose(
+		maplist.Filter(maplist.Parse(rawMaplist), filter),
+	), nil
 }
 
 func pyBool(b bool) (string, error) {

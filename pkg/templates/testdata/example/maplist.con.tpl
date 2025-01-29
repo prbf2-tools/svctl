@@ -1,3 +1,3 @@
 {{- range .Values.maps -}}
-{{- maplist . }}
+{{- maplist . $.Values.mapsRaw }}
 {{- end -}}
