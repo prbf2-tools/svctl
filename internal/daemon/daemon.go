@@ -2,10 +2,12 @@ package daemon
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/sboon-gg/svctl/internal/fsm"
+	"github.com/sboon-gg/svctl/internal/game"
 	"github.com/sboon-gg/svctl/internal/server"
 )
 
@@ -60,7 +62,7 @@ func Recover() (*Daemon, error) {
 			settingsPath,
 		)
 		if err != nil {
-			s.Log.Error("Unable to open server", "svPath", svPath, "settingsPath", settingsPath, "err", err)
+			slog.Error("Unable to open server", "svPath", svPath, "settingsPath", settingsPath, "err", err)
 			continue
 		}
 
@@ -171,12 +173,18 @@ type ServerStatus struct {
 	DesiredState ServerState
 	CurrentState ServerState
 	SettingsPath string
+	GameStatus   *game.Status
 }
 
 func (s *Daemon) Status(path string) (*ServerStatus, error) {
 	sv, err := s.findServer(path)
 	if err != nil {
 		return nil, err
+	}
+
+	gameStatus, err := sv.Server().Status()
+	if err != nil {
+		sv.Log.Error("Unable to get Gamespy 3 query status", "err", err)
 	}
 
 	info, ok := s.ServersInfo[path]
@@ -188,6 +196,7 @@ func (s *Daemon) Status(path string) (*ServerStatus, error) {
 		DesiredState: info.DesiredState,
 		CurrentState: Stopped,
 		SettingsPath: info.SettingsPath,
+		GameStatus:   gameStatus,
 	}
 
 	if sv.Server() != nil && sv.Server().IsRunning() {
