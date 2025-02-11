@@ -15,6 +15,7 @@ type ValuesSource struct {
 type Config struct {
 	Values        []ValuesSource `yaml:"values"`
 	Loggers       []LoggerConfig `yaml:"loggers"`
+	Uploader      UploaderConfig `yaml:"uploader"`
 	TemplatesPath string         `yaml:"templates"`
 }
 

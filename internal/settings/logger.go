@@ -73,7 +73,7 @@ func NewLogger(settingsPath string, loggers []LoggerConfig, with ...any) (*slog.
 		case logger.Webhook != nil:
 			option := slogwebhook.Option{
 				Level:    logger.Level,
-				Endpoint: logger.Discord.Endpoint,
+				Endpoint: logger.Webhook.Endpoint,
 			}
 			handlers = append(handlers, option.NewWebhookHandler())
 		case logger.File != nil:
