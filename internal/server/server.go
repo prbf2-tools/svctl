@@ -40,12 +40,12 @@ func (s *Server) Render(reloadableOnly bool) error {
 		return nil
 	}
 
-	values, err := s.Settings.Values()
+	values, gameConfig, err := s.Settings.TemplateData()
 	if err != nil {
 		return err
 	}
 
-	outputs, err := s.Settings.Templates.Render(values)
+	outputs, err := s.Settings.Templates.Render(gameConfig, values)
 	if err != nil {
 		return err
 	}
@@ -75,10 +75,10 @@ func (s *Server) DryRender() ([]templates.RenderOutput, error) {
 		return nil, nil
 	}
 
-	values, err := s.Settings.Values()
+	values, gameConfig, err := s.Settings.TemplateData()
 	if err != nil {
 		return nil, err
 	}
 
-	return s.Settings.Templates.Render(values)
+	return s.Settings.Templates.Render(gameConfig, values)
 }

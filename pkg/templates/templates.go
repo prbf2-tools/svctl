@@ -18,6 +18,7 @@ type Values map[string]any
 
 type Data struct {
 	Values Values
+	Config any
 }
 
 type Template struct {
@@ -121,13 +122,15 @@ func (t *Renderer) render(name, template string, data *Data) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (t *Renderer) Render(values Values) ([]RenderOutput, error) {
+func (t *Renderer) Render(config any, values Values) ([]RenderOutput, error) {
 	rendered := make([]RenderOutput, len(t.config.Templates))
 
 	data, err := t.prepData(values)
 	if err != nil {
 		return nil, err
 	}
+
+	data.Config = config
 
 	for i, tmplSpec := range t.config.Templates {
 		content, err := fs.ReadFile(t.files, tmplSpec.Source)

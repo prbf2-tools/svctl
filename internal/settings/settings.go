@@ -105,6 +105,11 @@ func Initialize(path string, opts *Opts) (*Settings, error) {
 				},
 			},
 		},
+		Game: GameConfig{
+			ServerIP:    "127.0.0.1",
+			ServerPort:  "16567",
+			GamespyPort: "29900",
+		},
 	}
 
 	if opts.TemplatesRepo != "" {
