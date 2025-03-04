@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/sboon-gg/svctl/internal/server"
 )
 
 type GameServer interface {
@@ -13,7 +13,7 @@ type GameServer interface {
 	Stop() error
 	IsRunning() bool
 	Render(bool) error
-	Status() (*game.Status, error)
+	Status() (*server.Status, error)
 }
 
 type FSM struct {

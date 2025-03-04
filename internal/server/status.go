@@ -1,11 +1,8 @@
-package game
+package server
 
 import (
 	"context"
 	"net"
-	"os"
-	"path/filepath"
-	"regexp"
 	"strconv"
 
 	"github.com/emilekm/go-prbf2/gamespy3"
@@ -22,12 +19,17 @@ type Status struct {
 }
 
 func (s *Server) Status() (*Status, error) {
-	port, err := s.gs3Port()
+	config, err := s.Config()
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := net.Dial("udp", net.JoinHostPort("localhost", port))
+	host := "127.0.0.1"
+	if config.Game.ExternalIP != "" {
+		host = config.Game.ServerIP
+	}
+
+	conn, err := net.Dial("udp", net.JoinHostPort(host, config.Game.GamespyPort))
 	if err != nil {
 		return nil, err
 	}
@@ -50,23 +52,4 @@ func (s *Server) Status() (*Status, error) {
 	}
 
 	return status, nil
-}
-
-func (s *Server) gs3Port() (string, error) {
-	content, err := os.ReadFile(filepath.Join(s.Path, "mods/pr", "settings/serversettings.con"))
-	if err != nil {
-		return "", err
-	}
-
-	regex := `sv.gameSpyPort\s*(\d+)`
-	return extractWithPattern(string(content), regex), nil
-}
-
-func extractWithPattern(content string, pattern string) string {
-	re := regexp.MustCompile(pattern)
-	matches := re.FindStringSubmatch(content)
-	if len(matches) > 1 {
-		return matches[1]
-	}
-	return ""
 }

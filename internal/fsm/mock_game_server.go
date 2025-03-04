@@ -12,7 +12,7 @@ package fsm
 import (
 	reflect "reflect"
 
-	game "github.com/sboon-gg/svctl/internal/game"
+	server "github.com/sboon-gg/svctl/internal/server"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -83,10 +83,10 @@ func (mr *MockGameServerMockRecorder) Start() *gomock.Call {
 }
 
 // Status mocks base method.
-func (m *MockGameServer) Status() (*game.Status, error) {
+func (m *MockGameServer) Status() (*server.Status, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Status")
-	ret0, _ := ret[0].(*game.Status)
+	ret0, _ := ret[0].(*server.Status)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

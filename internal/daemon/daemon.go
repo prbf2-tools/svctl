@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/sboon-gg/svctl/internal/fsm"
-	"github.com/sboon-gg/svctl/internal/game"
 	"github.com/sboon-gg/svctl/internal/server"
 )
 
@@ -173,7 +172,7 @@ type ServerStatus struct {
 	DesiredState ServerState
 	CurrentState ServerState
 	SettingsPath string
-	GameStatus   *game.Status
+	GameStatus   *server.Status
 }
 
 func (s *Daemon) Status(path string) (*ServerStatus, error) {
