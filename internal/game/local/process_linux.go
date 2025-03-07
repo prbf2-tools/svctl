@@ -1,6 +1,6 @@
 //go:build linux
 
-package game
+package local
 
 import (
 	"fmt"

@@ -1,6 +1,6 @@
 //go:build windows
 
-package game
+package local
 
 import (
 	"bytes"

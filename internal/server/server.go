@@ -5,12 +5,13 @@ import (
 	"path/filepath"
 
 	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/sboon-gg/svctl/internal/game/local"
 	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/sboon-gg/svctl/pkg/templates"
 )
 
 type Server struct {
-	game.Server
+	game.GameServer
 	settings.Settings
 }
 
@@ -20,14 +21,14 @@ func Open(serverPath, settingsPath string) (*Server, error) {
 		return nil, err
 	}
 
-	g, err := game.Open(serverPath)
+	g, err := local.Open(serverPath)
 	if err != nil {
 		return nil, err
 	}
 
 	sv := &Server{
-		Server:   *g,
-		Settings: *s,
+		GameServer: g,
+		Settings:   *s,
 	}
 
 	sv.Log = sv.Log.With("server", filepath.Base(serverPath))

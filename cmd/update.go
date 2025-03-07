@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/sboon-gg/svctl/internal/game/local"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +25,7 @@ func updateCmd() *cobra.Command {
 }
 
 func (o *updateOpts) Run(cmd *cobra.Command) error {
-	gameServer, err := game.Open(o.path)
+	gameServer, err := local.Open(o.path)
 	if err != nil {
 		return err
 	}

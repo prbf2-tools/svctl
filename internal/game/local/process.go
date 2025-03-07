@@ -1,8 +1,7 @@
-package game
+package local
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -62,14 +61,14 @@ func (s *Server) Stop() error {
 	return s.clearProcessPID()
 }
 
-func (s *Server) IsRunning() bool {
+func (s *Server) IsRunning() (bool, error) {
 	if s.processPID == nil {
 		err := s.retrieveProcessPID()
 		if err != nil {
-			fmt.Println(err)
+			return false, err
 		}
 		if s.processPID == nil {
-			return false
+			return false, nil
 		}
 	}
 
@@ -78,17 +77,17 @@ func (s *Server) IsRunning() bool {
 		health, err := processHealth(*s.processPID)
 		if err == nil && !health {
 			_ = s.clearProcessPID()
-			return false
+			return false, err
 		}
 	}
 
 	isRunning, err := s.isRunning()
 	if err != nil || !isRunning {
 		_ = s.clearProcessPID()
-		return false
+		return false, err
 	}
 
-	return isRunning
+	return isRunning, nil
 }
 
 func (s *Server) isRunning() (bool, error) {
