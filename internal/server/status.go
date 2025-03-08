@@ -29,26 +29,33 @@ func (s *Server) Status() (*Status, error) {
 		host = config.Game.ServerIP
 	}
 
-	conn, err := net.Dial("udp", net.JoinHostPort(host, config.Game.GamespyPort))
+	serverAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(host, strconv.Itoa(config.Game.GamespyPort)))
 	if err != nil {
 		return nil, err
 	}
 
-	defer conn.Close()
+	udp, err := net.DialUDP("udp", nil, serverAddr)
+	if err != nil {
+		return nil, err
+	}
 
-	resp, err := gamespy3.Status(context.Background(), conn)
+	defer udp.Close()
+
+	c := gamespy3.New(udp)
+
+	resp, err := c.ServerInfoB(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
 	status := &Status{
-		Hostname:   resp.Hostname,
-		Port:       strconv.Itoa(resp.HostPort),
-		MapName:    resp.Map.Name,
-		GameMode:   resp.Map.GameMode,
-		MapSize:    resp.Map.Layer,
-		NumPlayers: resp.NumPlayers,
-		MaxPlayers: resp.MaxPlayers,
+		Hostname:   resp.Header.Hostname,
+		Port:       strconv.Itoa(resp.Header.HostPort),
+		MapName:    resp.Header.Map.Name,
+		GameMode:   resp.Header.Map.GameMode,
+		MapSize:    resp.Header.Map.Layer,
+		NumPlayers: resp.Header.NumPlayers,
+		MaxPlayers: resp.Header.MaxPlayers,
 	}
 
 	return status, nil

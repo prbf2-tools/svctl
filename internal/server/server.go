@@ -3,7 +3,9 @@ package server
 import (
 	"path/filepath"
 
+	"github.com/docker/docker/client"
 	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/sboon-gg/svctl/internal/game/docker"
 	"github.com/sboon-gg/svctl/internal/game/local"
 	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/sboon-gg/svctl/pkg/templates"
@@ -20,9 +22,27 @@ func Open(serverPath, settingsPath string) (*Server, error) {
 		return nil, err
 	}
 
-	g, err := local.Open(serverPath)
+	config, err := s.Config()
 	if err != nil {
 		return nil, err
+	}
+
+	var g game.GameServer
+	if config.Docker != nil {
+		c, err := client.NewClientWithOpts(client.FromEnv)
+		if err != nil {
+			return nil, err
+		}
+
+		g, err = docker.Open(c, config.Docker.ContainerName)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		g, err = local.Open(serverPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	sv := &Server{

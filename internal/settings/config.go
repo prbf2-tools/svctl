@@ -14,9 +14,13 @@ type ValuesSource struct {
 
 type GameConfig struct {
 	ServerIP    string `yaml:"serverIP"`
-	ServerPort  string `yaml:"serverPort"`
-	GamespyPort string `yaml:"gamespyPort"`
+	ServerPort  int    `yaml:"serverPort"`
+	GamespyPort int    `yaml:"gamespyPort"`
 	ExternalIP  string `yaml:"externalIP"`
+}
+
+type DockerConfig struct {
+	ContainerName string `yaml:"containerName"`
 }
 
 type Config struct {
@@ -24,6 +28,7 @@ type Config struct {
 	Loggers       []LoggerConfig `yaml:"loggers"`
 	TemplatesPath string         `yaml:"templates"`
 	Game          GameConfig     `yaml:"game"`
+	Docker        *DockerConfig  `yaml:"docker,omtempty"`
 }
 
 func (s *Settings) Config() (*Config, error) {
