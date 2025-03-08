@@ -1,7 +1,6 @@
 package server
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/sboon-gg/svctl/internal/game"
@@ -56,13 +55,7 @@ func (s *Server) Render(reloadableOnly bool) error {
 			continue
 		}
 
-		dst := filepath.Join(s.Path, output.Destination)
-		err = os.MkdirAll(filepath.Dir(dst), 0755)
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(dst, output.Content, 0644)
+		err = s.WriteFile(output.Destination, output.Content)
 		if err != nil {
 			return err
 		}

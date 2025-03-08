@@ -11,7 +11,7 @@ import (
 type GameServer interface {
 	Start() error
 	Stop() error
-	IsRunning() bool
+	IsRunning() (bool, error)
 	Render(bool) error
 	Status() (*server.Status, error)
 }

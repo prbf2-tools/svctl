@@ -18,22 +18,47 @@ const (
 type Daemon struct {
 	Servers map[string]*fsm.FSM
 	ServerManager
+	config *Config
 }
 
-func New() (*Daemon, error) {
-	cacheDir, err := os.UserCacheDir()
+func New(configFile string) (*Daemon, error) {
+	if configFile == "" {
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			return nil, err
+		}
+
+		svctlConfigDir := filepath.Join(configDir, svctlDir)
+		err = os.MkdirAll(svctlConfigDir, 0755)
+		if err != nil {
+			return nil, err
+		}
+
+		configFile = filepath.Join(svctlConfigDir, "config.yaml")
+	}
+
+	config, err := NewConfig(configFile)
 	if err != nil {
 		return nil, err
 	}
 
-	svctlCacheDir := filepath.Join(cacheDir, svctlDir)
+	if config.CacheFile == "" {
+		cacheDir, err := os.UserCacheDir()
+		if err != nil {
+			return nil, err
+		}
 
-	err = os.MkdirAll(svctlCacheDir, 0755)
-	if err != nil {
-		return nil, err
+		svctlCacheDir := filepath.Join(cacheDir, svctlDir)
+
+		err = os.MkdirAll(svctlCacheDir, 0755)
+		if err != nil {
+			return nil, err
+		}
+
+		config.CacheFile = filepath.Join(svctlCacheDir, stateFile)
 	}
 
-	serverManager, err := NewServerManager(filepath.Join(svctlCacheDir, stateFile))
+	serverManager, err := NewServerManager(config.CacheFile)
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +69,8 @@ func New() (*Daemon, error) {
 	}, nil
 }
 
-func Recover() (*Daemon, error) {
-	d, err := New()
+func Recover(configFile string) (*Daemon, error) {
+	d, err := New(configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +91,12 @@ func Recover() (*Daemon, error) {
 		}
 
 		var machine *fsm.FSM
-		if s.IsRunning() {
+		isRunning, err := s.IsRunning()
+		if err != nil {
+			s.Log.Error("Unable to check if server is running", "err", err)
+		}
+
+		if isRunning {
 			machine = fsm.New(s, s.Log, fsm.NewStateRunning(nil))
 			if sv.DesiredState == Stopped {
 				err := machine.Event(fsm.EventStop)
@@ -198,8 +228,10 @@ func (s *Daemon) Status(path string) (*ServerStatus, error) {
 		GameStatus:   gameStatus,
 	}
 
-	if sv.Server() != nil && sv.Server().IsRunning() {
-		status.CurrentState = Running
+	if sv.Server() != nil {
+		if isRunning, err := sv.Server().IsRunning(); err == nil && isRunning {
+			status.CurrentState = Running
+		}
 	}
 
 	return &status, nil

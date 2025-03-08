@@ -41,11 +41,12 @@ func (m *MockGameServer) EXPECT() *MockGameServerMockRecorder {
 }
 
 // IsRunning mocks base method.
-func (m *MockGameServer) IsRunning() bool {
+func (m *MockGameServer) IsRunning() (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsRunning")
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // IsRunning indicates an expected call of IsRunning.

@@ -1,13 +1,9 @@
 package local
 
 import (
+	"context"
 	"errors"
 	"os"
-	"path/filepath"
-	"runtime"
-	"slices"
-	"strconv"
-	"strings"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
@@ -23,132 +19,84 @@ var commonProcessArgs = []string{
 	"+dedicated", "1",
 }
 
-func (s *Server) Start() error {
-	if s.IsRunning() {
-		return ErrProcessAlreadyRunning
-	}
+type spawnedProcess struct {
+	proc *os.Process
 
-	proc, err := s.startProcess()
-	if err != nil {
-		return err
-	}
-
-	pid := proc.Pid
-
-	err = proc.Release()
-	if err != nil {
-		return err
-	}
-
-	return s.storeProcessPID(pid)
+	ctx context.Context
 }
 
-func (s *Server) Stop() error {
-	if !s.IsRunning() {
+func watchProcess(proc *os.Process) *spawnedProcess {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		_, _ = proc.Wait()
+		cancel()
+	}()
+
+	return &spawnedProcess{
+		proc: proc,
+		ctx:  ctx,
+	}
+}
+
+func (p *spawnedProcess) PID() int {
+	return p.proc.Pid
+}
+
+func (p *spawnedProcess) Kill() error {
+	return p.proc.Kill()
+}
+
+func (p *spawnedProcess) IsRunning() (bool, error) {
+	select {
+	case <-p.ctx.Done():
+		return false, nil
+	default:
+		return true, nil
+	}
+}
+
+type recoveredProcess struct {
+	processExe string
+	pid        int
+}
+
+func recoverProcess(pid int, processExe string) *recoveredProcess {
+	return &recoveredProcess{
+		processExe: processExe,
+		pid:        pid,
+	}
+}
+
+func (p *recoveredProcess) PID() int {
+	return p.pid
+}
+
+func (p *recoveredProcess) Kill() error {
+	proc, err := process.NewProcess(int32(p.pid))
+	if err != nil {
 		return nil
 	}
 
-	proc, err := process.NewProcess(int32(*s.processPID))
-	if err != nil {
-		return err
-	}
-
-	err = proc.Kill()
-	if err != nil {
-		return err
-	}
-
-	return s.clearProcessPID()
+	return proc.Kill()
 }
 
-func (s *Server) IsRunning() (bool, error) {
-	if s.processPID == nil {
-		err := s.retrieveProcessPID()
-		if err != nil {
-			return false, err
-		}
-		if s.processPID == nil {
-			return false, nil
-		}
-	}
-
-	// On Windows we need to check if the process isn't hanging on an error dialog.
-	if runtime.GOOS == "windows" {
-		health, err := processHealth(*s.processPID)
-		if err == nil && !health {
-			_ = s.clearProcessPID()
-			return false, err
-		}
-	}
-
-	isRunning, err := s.isRunning()
-	if err != nil || !isRunning {
-		_ = s.clearProcessPID()
-		return false, err
-	}
-
-	return isRunning, nil
-}
-
-func (s *Server) isRunning() (bool, error) {
-	if s.processPID == nil {
+func (p *recoveredProcess) IsRunning() (bool, error) {
+	proc, err := process.NewProcess(int32(p.pid))
+	if err != nil {
 		return false, nil
 	}
 
-	proc, err := process.NewProcess(int32(*s.processPID))
+	procExe, err := proc.Exe()
 	if err != nil {
-		return false, err
-	}
-
-	if s.processExe() != filepath.Join(s.Path, binaryDir, processExe) {
 		return false, nil
 	}
 
-	status, err := proc.Status()
-	if err != nil || slices.Contains(status, "zombie") {
-		return false, err
+	if procExe != p.processExe {
+		return false, nil
 	}
 
-	isRunning, err := proc.IsRunning()
-	if err != nil {
-		return false, err
-	}
-
-	return isRunning, nil
-}
-
-func (s *Server) clearProcessPID() error {
-	s.processPID = nil
-
-	return os.Remove(filepath.Join(s.Path, pidFile))
-}
-
-func (s *Server) retrieveProcessPID() error {
-	content, err := os.ReadFile(filepath.Join(s.Path, pidFile))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
-	pid, err := strconv.Atoi(strings.TrimSpace(string(content)))
-	if err != nil {
-		return err
-	}
-
-	s.processPID = &pid
-	return nil
-}
-
-func (s *Server) storeProcessPID(pid int) error {
-	err := os.WriteFile(filepath.Join(s.Path, pidFile), []byte(strconv.Itoa(pid)), 0644)
-	if err != nil {
-		return err
-	}
-
-	s.processPID = &pid
-	return nil
+	return proc.IsRunning()
 }
 
 func makeFileExecutable(exePath string) error {

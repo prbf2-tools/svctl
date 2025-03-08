@@ -25,8 +25,8 @@ func (s *ServerSuite) TestServer_Open() {
 
 	sv, err := Open(dir)
 	s.Require().NoError(err)
-	s.Nil(sv.processPID)
-	s.Equal(dir, sv.Path)
+	s.Nil(sv.process)
+	s.Equal(dir, sv.path)
 }
 
 func (s *ServerSuite) TestServer_Open_WithPIDFile() {
@@ -37,8 +37,8 @@ func (s *ServerSuite) TestServer_Open_WithPIDFile() {
 
 	sv, err := Open(dir)
 	s.Require().NoError(err)
-	s.Equal(123, *sv.processPID)
-	s.Equal(dir, sv.Path)
+	s.Equal(123, sv.process.PID())
+	s.Equal(dir, sv.path)
 }
 
 func (s *ServerSuite) TestServerLifecycle() {
@@ -51,14 +51,22 @@ func (s *ServerSuite) TestServerLifecycle() {
 
 	err = sv.Start()
 	s.Require().NoError(err)
-	s.NotNil(sv.processPID)
+	s.NotNil(sv.process)
 
-	s.Eventually(sv.IsRunning, 10*time.Second, 100*time.Millisecond)
+	s.Eventually(func() bool {
+		isRunning, err := sv.IsRunning()
+		s.Assert().NoError(err)
+		return isRunning
+	}, 10*time.Second, 100*time.Millisecond)
 
 	err = sv.Stop()
 	s.Require().NoError(err)
 
-	s.Never(sv.IsRunning, 10*time.Second, 100*time.Millisecond)
+	s.Never(func() bool {
+		isRunning, err := sv.IsRunning()
+		s.Assert().NoError(err)
+		return isRunning
+	}, 10*time.Second, 100*time.Millisecond)
 }
 
 func TestServerSuite(t *testing.T) {

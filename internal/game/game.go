@@ -6,8 +6,8 @@ type GameServer interface {
 	Start() error
 	IsRunning() (bool, error)
 	Stop() error
-	WriteFile(path string, data []byte) error
 	ReadFile(path string) ([]byte, error)
+	WriteFile(path string, data []byte) error
 }
 
 var (

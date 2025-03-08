@@ -55,7 +55,13 @@ func (s *StateRunning) OnEnter(fsm *FSM) {
 					log.Error("Failed to render templates", "err", err)
 				}
 			default:
-				if !sv.IsRunning() {
+				isRunning, err := sv.IsRunning()
+				if err != nil {
+					log.Error("Failed to check if server is running", "err", err)
+					continue
+				}
+
+				if !isRunning {
 					log.Error("Server not running, attempting restart")
 					fsm.ChangeState(NewStateRestarting(s.counter))
 					ticker.Stop()
