@@ -1,16 +1,18 @@
 package server
 
 import (
-	"os"
 	"path/filepath"
 
+	"github.com/docker/docker/client"
 	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/sboon-gg/svctl/internal/game/docker"
+	"github.com/sboon-gg/svctl/internal/game/local"
 	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/sboon-gg/svctl/pkg/templates"
 )
 
 type Server struct {
-	game.Server
+	game.GameServer
 	settings.Settings
 }
 
@@ -20,14 +22,32 @@ func Open(serverPath, settingsPath string) (*Server, error) {
 		return nil, err
 	}
 
-	g, err := game.Open(serverPath)
+	config, err := s.Config()
 	if err != nil {
 		return nil, err
 	}
 
+	var g game.GameServer
+	if config.Docker != nil {
+		c, err := client.NewClientWithOpts(client.FromEnv)
+		if err != nil {
+			return nil, err
+		}
+
+		g, err = docker.Open(c, config.Docker.ContainerName)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		g, err = local.Open(serverPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	sv := &Server{
-		Server:   *g,
-		Settings: *s,
+		GameServer: g,
+		Settings:   *s,
 	}
 
 	sv.Log = sv.Log.With("server", filepath.Base(serverPath))
@@ -40,12 +60,12 @@ func (s *Server) Render(reloadableOnly bool) error {
 		return nil
 	}
 
-	values, err := s.Settings.Values()
+	values, gameConfig, err := s.Settings.TemplateData()
 	if err != nil {
 		return err
 	}
 
-	outputs, err := s.Settings.Templates.Render(values)
+	outputs, err := s.Settings.Templates.Render(gameConfig, values)
 	if err != nil {
 		return err
 	}
@@ -55,13 +75,7 @@ func (s *Server) Render(reloadableOnly bool) error {
 			continue
 		}
 
-		dst := filepath.Join(s.Path, output.Destination)
-		err = os.MkdirAll(filepath.Dir(dst), 0755)
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(dst, output.Content, 0644)
+		err = s.WriteFile(output.Destination, output.Content)
 		if err != nil {
 			return err
 		}
@@ -75,10 +89,10 @@ func (s *Server) DryRender() ([]templates.RenderOutput, error) {
 		return nil, nil
 	}
 
-	values, err := s.Settings.Values()
+	values, gameConfig, err := s.Settings.TemplateData()
 	if err != nil {
 		return nil, err
 	}
 
-	return s.Settings.Templates.Render(values)
+	return s.Settings.Templates.Render(gameConfig, values)
 }

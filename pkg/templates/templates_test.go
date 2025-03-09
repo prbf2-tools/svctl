@@ -106,7 +106,7 @@ mapList.append saaremaa gpm_coop 64
 			tmpl, err := NewFromPath("./testdata/example")
 			assert.NoError(t, err)
 
-			out, err := tmpl.Render(test.values)
+			out, err := tmpl.Render(nil, test.values)
 			assert.NoError(t, err)
 
 			assert.Len(t, out, len(test.expected))

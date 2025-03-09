@@ -4,13 +4,16 @@ import (
 	"context"
 	"log/slog"
 	"time"
+
+	"github.com/sboon-gg/svctl/internal/server"
 )
 
 type GameServer interface {
 	Start() error
 	Stop() error
-	IsRunning() bool
+	IsRunning() (bool, error)
 	Render(bool) error
+	Status() (*server.Status, error)
 }
 
 type FSM struct {

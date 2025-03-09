@@ -2,6 +2,7 @@ package daemon
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -17,22 +18,47 @@ const (
 type Daemon struct {
 	Servers map[string]*fsm.FSM
 	ServerManager
+	config *Config
 }
 
-func New() (*Daemon, error) {
-	cacheDir, err := os.UserCacheDir()
+func New(configFile string) (*Daemon, error) {
+	if configFile == "" {
+		configDir, err := os.UserConfigDir()
+		if err != nil {
+			return nil, err
+		}
+
+		svctlConfigDir := filepath.Join(configDir, svctlDir)
+		err = os.MkdirAll(svctlConfigDir, 0755)
+		if err != nil {
+			return nil, err
+		}
+
+		configFile = filepath.Join(svctlConfigDir, "config.yaml")
+	}
+
+	config, err := NewConfig(configFile)
 	if err != nil {
 		return nil, err
 	}
 
-	svctlCacheDir := filepath.Join(cacheDir, svctlDir)
+	if config.CacheFile == "" {
+		cacheDir, err := os.UserCacheDir()
+		if err != nil {
+			return nil, err
+		}
 
-	err = os.MkdirAll(svctlCacheDir, 0755)
-	if err != nil {
-		return nil, err
+		svctlCacheDir := filepath.Join(cacheDir, svctlDir)
+
+		err = os.MkdirAll(svctlCacheDir, 0755)
+		if err != nil {
+			return nil, err
+		}
+
+		config.CacheFile = filepath.Join(svctlCacheDir, stateFile)
 	}
 
-	serverManager, err := NewServerManager(filepath.Join(svctlCacheDir, stateFile))
+	serverManager, err := NewServerManager(config.CacheFile)
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +66,12 @@ func New() (*Daemon, error) {
 	return &Daemon{
 		Servers:       make(map[string]*fsm.FSM),
 		ServerManager: *serverManager,
+		config:        config,
 	}, nil
 }
 
-func Recover() (*Daemon, error) {
-	d, err := New()
+func Recover(configFile string) (*Daemon, error) {
+	d, err := New(configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +87,17 @@ func Recover() (*Daemon, error) {
 			settingsPath,
 		)
 		if err != nil {
-			s.Log.Error("Unable to open server", "svPath", svPath, "settingsPath", settingsPath, "err", err)
+			slog.Error("Unable to open server", "svPath", svPath, "settingsPath", settingsPath, "err", err)
 			continue
 		}
 
 		var machine *fsm.FSM
-		if s.IsRunning() {
+		isRunning, err := s.IsRunning()
+		if err != nil {
+			s.Log.Error("Unable to check if server is running", "err", err)
+		}
+
+		if isRunning {
 			machine = fsm.New(s, s.Log, fsm.NewStateRunning(nil))
 			if sv.DesiredState == Stopped {
 				err := machine.Event(fsm.EventStop)
@@ -171,12 +203,18 @@ type ServerStatus struct {
 	DesiredState ServerState
 	CurrentState ServerState
 	SettingsPath string
+	GameStatus   *server.Status
 }
 
 func (s *Daemon) Status(path string) (*ServerStatus, error) {
 	sv, err := s.findServer(path)
 	if err != nil {
 		return nil, err
+	}
+
+	gameStatus, err := sv.Server().Status()
+	if err != nil {
+		sv.Log.Error("Unable to get Gamespy 3 query status", "err", err)
 	}
 
 	info, ok := s.ServersInfo[path]
@@ -188,10 +226,13 @@ func (s *Daemon) Status(path string) (*ServerStatus, error) {
 		DesiredState: info.DesiredState,
 		CurrentState: Stopped,
 		SettingsPath: info.SettingsPath,
+		GameStatus:   gameStatus,
 	}
 
-	if sv.Server() != nil && sv.Server().IsRunning() {
-		status.CurrentState = Running
+	if sv.Server() != nil {
+		if isRunning, err := sv.Server().IsRunning(); err == nil && isRunning {
+			status.CurrentState = Running
+		}
 	}
 
 	return &status, nil

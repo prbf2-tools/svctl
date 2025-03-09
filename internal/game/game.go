@@ -1,50 +1,15 @@
 package game
 
-import (
-	"context"
-	"io"
-	"os"
+import "errors"
+
+type GameServer interface {
+	Start() error
+	IsRunning() (bool, error)
+	Stop() error
+	ReadFile(path string) ([]byte, error)
+	WriteFile(path string, data []byte) error
+}
+
+var (
+	ErrIsDir = errors.New("path is a directory")
 )
-
-const (
-	pidFile     = "prbf2.pid"
-	updaterPath = "mods/pr/bin"
-)
-
-type Server struct {
-	Path       string
-	processPID *int
-}
-
-func Open(path string) (*Server, error) {
-	s := &Server{
-		Path: path,
-	}
-
-	err := s.retrieveProcessPID()
-	if err != nil {
-		return nil, err
-	}
-
-	return s, nil
-}
-
-func (s *Server) Update(ctx context.Context, outW io.Writer, inR io.Reader, errW io.Writer) error {
-	return s.update(ctx, outW, inR, errW)
-}
-
-func makeFileExecutable(exePath string) error {
-	info, err := os.Stat(exePath)
-	if err != nil {
-		return err
-	}
-
-	if info.Mode().Perm()&0100 == 0 {
-		err = os.Chmod(exePath, info.Mode()|0100)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}

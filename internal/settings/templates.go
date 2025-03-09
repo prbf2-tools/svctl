@@ -15,12 +15,12 @@ import (
 	"github.com/sboon-gg/svctl/pkg/templates"
 )
 
-func (s *Settings) Values() (templates.Values, error) {
+func (s *Settings) TemplateData() (templates.Values, *GameConfig, error) {
 	var allValues templates.Values
 
 	config, err := s.Config()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for _, source := range config.Values {
@@ -32,28 +32,28 @@ func (s *Settings) Values() (templates.Values, error) {
 
 			content, err := os.ReadFile(sourceFile)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			var values templates.Values
 			err = yaml.Unmarshal(content, &values)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 
 			err = mergo.Map(&allValues, values, mergo.WithAppendSlice, mergo.WithOverride)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		} else if source.Values != nil {
 			err = mergo.Map(&allValues, source.Values, mergo.WithAppendSlice, mergo.WithOverride)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 	}
 
-	return allValues, nil
+	return allValues, &config.Game, nil
 }
 
 func cloneTemplates(path, repoURL, token string) error {

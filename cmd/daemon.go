@@ -17,8 +17,9 @@ const (
 )
 
 type daemonOpts struct {
-	host string
-	port string
+	host       string
+	port       string
+	configFile string
 }
 
 func newDaemonOpts() *daemonOpts {
@@ -44,10 +45,11 @@ func daemonCmd() *cobra.Command {
 func (o *daemonOpts) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.host, "host", o.host, "Host to listen on")
 	cmd.Flags().StringVar(&o.port, "port", o.port, "Port to listen on")
+	cmd.Flags().StringVar(&o.configFile, "config", o.configFile, "Path to the daemon config file")
 }
 
 func (o *daemonOpts) Run(cmd *cobra.Command, args []string) error {
-	d, err := daemon.Recover()
+	d, err := daemon.Recover(o.configFile)
 	if err != nil {
 		return err
 	}

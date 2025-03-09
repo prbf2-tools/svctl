@@ -12,10 +12,23 @@ type ValuesSource struct {
 	Values map[string]any `yaml:"values"`
 }
 
+type GameConfig struct {
+	ServerIP    string `yaml:"serverIP"`
+	ServerPort  int    `yaml:"serverPort"`
+	GamespyPort int    `yaml:"gamespyPort"`
+	ExternalIP  string `yaml:"externalIP"`
+}
+
+type DockerConfig struct {
+	ContainerName string `yaml:"containerName"`
+}
+
 type Config struct {
 	Values        []ValuesSource `yaml:"values"`
 	Loggers       []LoggerConfig `yaml:"loggers"`
 	TemplatesPath string         `yaml:"templates"`
+	Game          GameConfig     `yaml:"game"`
+	Docker        *DockerConfig  `yaml:"docker,omtempty"`
 }
 
 func (s *Settings) Config() (*Config, error) {
@@ -32,10 +45,6 @@ func (s *Settings) Config() (*Config, error) {
 	}
 
 	return &config, nil
-}
-
-func (s *Settings) WriteConfig(conf *Config) error {
-	return writeConfig(s.path, conf)
 }
 
 func writeConfig(path string, conf *Config) error {

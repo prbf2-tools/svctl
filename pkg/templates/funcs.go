@@ -29,8 +29,6 @@ func (r *Renderer) FuncMap() template.FuncMap {
 }
 
 func (t *Renderer) maplist(filterMap interface{}, rawMaplist string) (string, error) {
-	fmt.Printf("filterMap: %T\n", filterMap)
-
 	var filter maplist.MapInfo
 	if f, ok := filterMap.(string); ok {
 		filter = maplist.Parse(fmt.Sprintf("%s %s", maplist.MaplistAppendStr, f))[0]
