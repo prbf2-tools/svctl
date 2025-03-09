@@ -7,8 +7,7 @@ import (
 )
 
 type Config struct {
-	Docker    DockerConfig `yaml:"docker"`
-	CacheFile string       `yaml:"cache"`
+	CacheFile string `yaml:"cache"`
 }
 
 type DockerConfig struct {
