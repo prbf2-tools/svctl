@@ -66,6 +66,7 @@ func New(configFile string) (*Daemon, error) {
 	return &Daemon{
 		Servers:       make(map[string]*fsm.FSM),
 		ServerManager: *serverManager,
+		config:        config,
 	}, nil
 }
 
