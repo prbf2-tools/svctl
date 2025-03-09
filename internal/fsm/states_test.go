@@ -51,7 +51,7 @@ func (s *StatesSuite) TestStateRunning() {
 	state.renderInterval = time.Second
 
 	gameServerMock.EXPECT().Render(true).Return(nil)
-	gameServerMock.EXPECT().IsRunning().Return(true).AnyTimes()
+	gameServerMock.EXPECT().IsRunning().Return(true, nil).AnyTimes()
 	fsm := New(gameServerMock, slog.Default(), state)
 
 	s.Run("Render should be called", func() {
