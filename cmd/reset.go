@@ -45,7 +45,7 @@ func (o *resetOpts) AddFlags(cmd *cobra.Command) {
 }
 
 func (o *resetOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.Dial(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
 	}
