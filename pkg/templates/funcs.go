@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"text/template"
 
@@ -21,14 +22,12 @@ func (r *Renderer) FuncMap() template.FuncMap {
 		"maplist": r.maplist,
 	}
 
-	for k, v := range extra {
-		f[k] = v
-	}
+	maps.Copy(f, extra)
 
 	return f
 }
 
-func (t *Renderer) maplist(filterMap interface{}, rawMaplist string) (string, error) {
+func (t *Renderer) maplist(filterMap any, rawMaplist string) (string, error) {
 	var filter maplist.MapInfo
 	if f, ok := filterMap.(string); ok {
 		filter = maplist.Parse(fmt.Sprintf("%s %s", maplist.MaplistAppendStr, f))[0]

@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/sboon-gg/svctl/internal/game"
 )
 
 const (
@@ -20,6 +22,8 @@ type runningProcess interface {
 	Kill() error
 	PID() int
 }
+
+var _ game.GameServer = &Server{}
 
 type Server struct {
 	path    string
