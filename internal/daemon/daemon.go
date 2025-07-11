@@ -150,11 +150,6 @@ func (s *Daemon) Start(path string) error {
 		return err
 	}
 
-	err = sv.Server().Render(false)
-	if err != nil {
-		return err
-	}
-
 	err = sv.Event(fsm.EventStart)
 	if err != nil {
 		return err

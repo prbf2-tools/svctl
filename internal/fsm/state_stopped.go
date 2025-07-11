@@ -22,7 +22,12 @@ func (s *StateStopped) EventHandler(event Event, fsm *FSM) (State, error) {
 
 	switch event {
 	case EventStart:
-		err := fsm.Server().Start()
+		err := fsm.Server().Render(false)
+		if err != nil {
+			return NewStateErrored(err), err
+		}
+
+		err = fsm.Server().Start()
 		if err != nil {
 			return NewStateErrored(err), err
 		}
