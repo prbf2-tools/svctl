@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 	"path"
 
 	"github.com/docker/docker/api/types/container"
@@ -71,10 +72,13 @@ func (c *Container) IsRunning() (bool, error) {
 }
 
 func (c *Container) WriteFile(filePath string, data []byte) error {
+	return c.WriteFileFromReader(filePath, bytes.NewReader(data), int64(len(data)))
+}
+
+func (c *Container) WriteFileFromReader(filePath string, reader io.Reader, size int64) error {
 	ctx := context.Background()
 
 	fullPath := path.Join(c.workDir, filePath)
-
 	mode := int64(0644)
 
 	stat, err := c.docker.ContainerStatPath(ctx, c.name, fullPath)
@@ -82,12 +86,20 @@ func (c *Container) WriteFile(filePath string, data []byte) error {
 		mode = int64(stat.Mode)
 	}
 
-	buf := new(bytes.Buffer)
+	f, err := os.CreateTemp("", "svctl-tar-*.tar")
+	if err != nil {
+		return err
+	}
 
-	tarWriter := tar.NewWriter(buf)
+	defer func() {
+		f.Close()
+		os.Remove(f.Name())
+	}()
+
+	tarWriter := tar.NewWriter(f)
 	err = tarWriter.WriteHeader(&tar.Header{
 		Name: path.Base(filePath),
-		Size: int64(len(data)),
+		Size: size,
 		Mode: mode,
 		Uid:  c.uid,
 		Gid:  c.gid,
@@ -96,7 +108,7 @@ func (c *Container) WriteFile(filePath string, data []byte) error {
 		return err
 	}
 
-	_, err = tarWriter.Write(data)
+	_, err = io.Copy(tarWriter, reader)
 	if err != nil {
 		return err
 	}
@@ -106,7 +118,12 @@ func (c *Container) WriteFile(filePath string, data []byte) error {
 		return err
 	}
 
-	return c.docker.CopyToContainer(ctx, c.name, path.Dir(fullPath), buf, container.CopyToContainerOptions{})
+	_, err = f.Seek(0, io.SeekStart)
+	if err != nil {
+		return err
+	}
+
+	return c.docker.CopyToContainer(ctx, c.name, path.Dir(fullPath), f, container.CopyToContainerOptions{})
 }
 
 func (c *Container) ReadFile(filePath string) ([]byte, error) {

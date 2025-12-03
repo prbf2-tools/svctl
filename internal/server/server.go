@@ -109,12 +109,18 @@ func (s *Server) ApplyPatches() error {
 			continue
 		}
 
-		content, err := os.ReadFile(filepath.Join(s.Settings.Path, patch.Source))
+		f, err := os.Open(filepath.Join(s.Settings.Path, patch.Source))
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		stat, err := f.Stat()
 		if err != nil {
 			return err
 		}
 
-		err = s.WriteFile(patch.Destination, content)
+		err = s.WriteFileFromReader(patch.Destination, f, stat.Size())
 		if err != nil {
 			return err
 		}
