@@ -23,10 +23,16 @@ type DockerConfig struct {
 	ContainerName string `yaml:"containerName"`
 }
 
+type PatchConfig struct {
+	Source      string `yaml:"source"`
+	Destination string `yaml:"destination"`
+}
+
 type Config struct {
 	Values        []ValuesSource `yaml:"values"`
 	Loggers       []LoggerConfig `yaml:"loggers"`
 	TemplatesPath string         `yaml:"templates"`
+	Patches       []PatchConfig  `yaml:"patches"`
 	Game          GameConfig     `yaml:"game"`
 	Docker        *DockerConfig  `yaml:"docker,omtempty"`
 }
@@ -34,7 +40,7 @@ type Config struct {
 func (s *Settings) Config() (*Config, error) {
 	var config Config
 
-	content, err := os.ReadFile(filepath.Join(s.path, configFileName))
+	content, err := os.ReadFile(filepath.Join(s.Path, configFileName))
 	if err != nil {
 		return nil, err
 	}

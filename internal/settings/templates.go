@@ -27,7 +27,7 @@ func (s *Settings) TemplateData() (templates.Values, *GameConfig, error) {
 		if source.File != "" {
 			sourceFile := source.File
 			if !filepath.IsAbs(sourceFile) {
-				sourceFile = filepath.Join(s.path, sourceFile)
+				sourceFile = filepath.Join(s.Path, sourceFile)
 			}
 
 			content, err := os.ReadFile(sourceFile)

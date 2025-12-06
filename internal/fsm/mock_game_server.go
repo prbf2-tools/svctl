@@ -40,6 +40,20 @@ func (m *MockGameServer) EXPECT() *MockGameServerMockRecorder {
 	return m.recorder
 }
 
+// ApplyPatches mocks base method.
+func (m *MockGameServer) ApplyPatches() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyPatches")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyPatches indicates an expected call of ApplyPatches.
+func (mr *MockGameServerMockRecorder) ApplyPatches() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyPatches", reflect.TypeOf((*MockGameServer)(nil).ApplyPatches))
+}
+
 // IsRunning mocks base method.
 func (m *MockGameServer) IsRunning() (bool, error) {
 	m.ctrl.T.Helper()

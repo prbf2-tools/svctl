@@ -14,6 +14,7 @@ type GameServer interface {
 	IsRunning() (bool, error)
 	Render(bool) error
 	Status() (*server.Status, error)
+	ApplyPatches() error
 }
 
 type FSM struct {

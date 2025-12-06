@@ -36,8 +36,14 @@ func (s *StateRestarting) OnEnter(fsm *FSM) {
 		}
 	}
 
+	log.Info("Applying patches")
+	err := fsm.Server().ApplyPatches()
+	if err != nil {
+		log.Error("Failed to apply patches", "err", err)
+	}
+
 	log.Info("Rendering templates")
-	err := fsm.Server().Render(false)
+	err = fsm.Server().Render(false)
 	if err != nil {
 		log.Error("Failed to render templates", "err", err)
 	}

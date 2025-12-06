@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/sboon-gg/svctl/internal/game"
 )
 
 const (
@@ -20,6 +22,8 @@ type runningProcess interface {
 	Kill() error
 	PID() int
 }
+
+var _ game.GameServer = &Server{}
 
 type Server struct {
 	path    string
@@ -52,6 +56,24 @@ func (s *Server) WriteFile(path string, data []byte) error {
 	}
 
 	return os.WriteFile(fullPath, data, 0644)
+}
+
+func (s *Server) WriteFileFromReader(path string, r io.Reader, _ int64) error {
+	fullPath := filepath.Join(s.path, path)
+
+	if _, err := os.Stat(filepath.Dir(fullPath)); os.IsNotExist(err) {
+		// Ignore error, the write will fail if the directory doesn't exist.
+		_ = os.MkdirAll(filepath.Dir(fullPath), 0755)
+	}
+
+	f, err := os.Create(fullPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = io.Copy(f, r)
+	return err
 }
 
 func (s *Server) Update(ctx context.Context, outW io.Writer, inR io.Reader, errW io.Writer) error {

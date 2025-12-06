@@ -1,6 +1,7 @@
 package server
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/docker/docker/client"
@@ -95,4 +96,35 @@ func (s *Server) DryRender() ([]templates.RenderOutput, error) {
 	}
 
 	return s.Settings.Templates.Render(gameConfig, values)
+}
+
+func (s *Server) ApplyPatches() error {
+	cfg, err := s.Settings.Config()
+	if err != nil {
+		return err
+	}
+
+	for _, patch := range cfg.Patches {
+		if patch.Source == "" || patch.Destination == "" {
+			continue
+		}
+
+		f, err := os.Open(filepath.Join(s.Settings.Path, patch.Source))
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		stat, err := f.Stat()
+		if err != nil {
+			return err
+		}
+
+		err = s.WriteFileFromReader(patch.Destination, f, stat.Size())
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

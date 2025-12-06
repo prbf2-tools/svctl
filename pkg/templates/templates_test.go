@@ -49,8 +49,8 @@ mapList.append sahel gpm_coop 64
 				"test":                  "changed-string",
 				"quoted":                "but different",
 				"overriddenByZeroValue": 0,
-				"maps": []interface{}{
-					map[string]interface{}{
+				"maps": []any{
+					map[string]any{
 						"name": "saaremaa",
 					},
 				},

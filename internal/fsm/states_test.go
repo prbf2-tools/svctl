@@ -32,6 +32,8 @@ func (s *StatesSuite) TestStateStopped() {
 	state := NewStateStopped()
 	fsm := New(gameServerMock, slog.Default(), state)
 
+	gameServerMock.EXPECT().ApplyPatches().Return(nil)
+	gameServerMock.EXPECT().Render(false).Return(nil)
 	gameServerMock.EXPECT().Start().Return(nil)
 
 	nextState, stateErr := state.EventHandler(EventStart, fsm)
@@ -107,11 +109,13 @@ func (s *StatesSuite) TestStateRestarting() {
 
 	state := NewStateRestarting(NewRestartCounter(3))
 
+	gameServerMock.EXPECT().ApplyPatches().Return(nil)
 	gameServerMock.EXPECT().Render(false).Return(nil)
 	gameServerMock.EXPECT().Start().Return(nil)
 	fsm := New(gameServerMock, slog.Default(), state)
 
 	s.Run("Succesfull restart", func() {
+		gameServerMock.EXPECT().ApplyPatches().Return(nil)
 		gameServerMock.EXPECT().Render(false).Return(nil)
 		gameServerMock.EXPECT().Start().Return(nil)
 		state.OnEnter(fsm)

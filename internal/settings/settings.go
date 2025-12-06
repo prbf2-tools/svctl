@@ -16,14 +16,14 @@ const (
 )
 
 type Settings struct {
-	path      string
+	Path      string
 	Templates *templates.Renderer
 	Log       *slog.Logger
 }
 
 func Open(path string) (*Settings, error) {
 	s := &Settings{
-		path: path,
+		Path: path,
 	}
 
 	config, err := s.Config()

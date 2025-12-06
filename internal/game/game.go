@@ -1,6 +1,9 @@
 package game
 
-import "errors"
+import (
+	"errors"
+	"io"
+)
 
 type GameServer interface {
 	Start() error
@@ -8,6 +11,7 @@ type GameServer interface {
 	Stop() error
 	ReadFile(path string) ([]byte, error)
 	WriteFile(path string, data []byte) error
+	WriteFileFromReader(path string, reader io.Reader, size int64) error
 }
 
 var (

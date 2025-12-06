@@ -19,6 +19,8 @@ func (s *FSMSuite) TestStartStop() {
 	state := NewStateStopped()
 	fsm := New(gameServerMock, slog.Default(), state)
 
+	gameServerMock.EXPECT().ApplyPatches().Return(nil)
+	gameServerMock.EXPECT().Render(false).Return(nil)
 	gameServerMock.EXPECT().Start().Return(nil)
 
 	err := fsm.Event(EventStart)
