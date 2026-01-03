@@ -19,6 +19,22 @@ func newTemplatesRenderOpts() *templatesRenderOpts {
 	return &templatesRenderOpts{}
 }
 
+func templatesRenderCmd() *cobra.Command {
+	opts := newTemplatesRenderOpts()
+
+	cmd := &cobra.Command{
+		Use:   "render <TEMPLATES_PATH>",
+		Short: "Render templates with provided values",
+		RunE:  opts.Run,
+	}
+
+	cmd.Args = cobra.ExactArgs(1)
+
+	opts.AddFlags(cmd)
+
+	return cmd
+}
+
 func (opts *templatesRenderOpts) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&opts.values, "values", "f", []string{}, "Path to values file(s)")
 	cmd.Flags().StringVarP(&opts.outputPath, "output", "o", "", "Path to output rendered files")
@@ -85,22 +101,6 @@ func (opts *templatesRenderOpts) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-func templatesRenderCmd() *cobra.Command {
-	opts := newTemplatesRenderOpts()
-
-	cmd := &cobra.Command{
-		Use:   "render <TEMPLATES_PATH>",
-		Short: "Render templates with provided values",
-		RunE:  opts.Run,
-	}
-
-	cmd.Args = cobra.ExactArgs(1)
-
-	opts.AddFlags(cmd)
-
-	return cmd
 }
 
 func init() {
