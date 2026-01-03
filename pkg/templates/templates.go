@@ -191,3 +191,14 @@ func (t *Renderer) Defaults() (Values, error) {
 
 	return defaults, nil
 }
+
+func MergeValues(sources ...Values) (Values, error) {
+	allValues := make(Values)
+	for _, values := range sources {
+		err := mergo.Map(&allValues, values, mergo.WithAppendSlice, mergo.WithOverride)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return allValues, nil
+}
