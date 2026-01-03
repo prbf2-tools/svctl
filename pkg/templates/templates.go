@@ -17,8 +17,9 @@ const (
 type Values map[string]any
 
 type Data struct {
-	Values Values
-	Config any
+	Values   Values
+	Defaults Values
+	Config   any
 }
 
 type Template struct {
@@ -93,6 +94,8 @@ func (t *Renderer) prepData(values Values) (*Data, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	data.Defaults = defaults
 
 	err = mergo.Map(&data.Values, defaults)
 	if err != nil {
