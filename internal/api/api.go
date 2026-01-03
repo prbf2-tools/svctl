@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/sboon-gg/svctl/internal/daemon"
-	"github.com/sboon-gg/svctl/svctl"
+	"github.com/sboon-gg/svctl/svctl/v1"
 )
 
 type daemonServer struct {
@@ -18,56 +18,58 @@ func NewDaemonServer(daemon *daemon.Daemon) svctl.ServersServer {
 	}
 }
 
-func (s *daemonServer) Register(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
-	err := s.daemon.Register(opts.GetPath(), opts.GetSettingsPath())
+func (s *daemonServer) Register(ctx context.Context, opts *svctl.RegisterServerOpts) (*svctl.ServerInfo, error) {
+	typ := serverTypeFromProto(opts.GetType())
+
+	err := s.daemon.Register(opts.GetId(), opts.GetSettingsPath(), typ)
 	if err != nil {
 		return nil, err
 	}
 
-	info, err := s.fetchServerInfo(opts.GetPath())
+	info, err := s.fetchServerInfo(opts.GetId())
 	if err != nil {
 		return nil, err
 	}
 
-	info.Status = svctl.Status_REGISTERED
+	info.Status = svctl.Status_STATUS_REGISTERED
 
 	return info, nil
 }
 
 func (s *daemonServer) Start(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
-	err := s.daemon.Start(opts.GetPath())
+	err := s.daemon.Start(opts.GetId())
 	if err != nil {
 		return nil, err
 	}
 
-	info, err := s.fetchServerInfo(opts.GetPath())
+	info, err := s.fetchServerInfo(opts.GetId())
 	if err != nil {
 		return nil, err
 	}
 
-	info.Status = svctl.Status_STARTING
+	info.Status = svctl.Status_STATUS_STARTING
 
 	return info, nil
 }
 
 func (s *daemonServer) Stop(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
-	err := s.daemon.Stop(opts.GetPath())
+	err := s.daemon.Stop(opts.GetId())
 	if err != nil {
 		return nil, err
 	}
 
-	info, err := s.fetchServerInfo(opts.GetPath())
+	info, err := s.fetchServerInfo(opts.GetId())
 	if err != nil {
 		return nil, err
 	}
 
-	info.Status = svctl.Status_STOPPING
+	info.Status = svctl.Status_STATUS_STOPPING
 
 	return info, nil
 }
 
 func (s *daemonServer) Status(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
-	info, err := s.fetchServerInfo(opts.GetPath())
+	info, err := s.fetchServerInfo(opts.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -76,22 +78,22 @@ func (s *daemonServer) Status(ctx context.Context, opts *svctl.ServerOpts) (*svc
 }
 
 func (s *daemonServer) Reset(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
-	err := s.daemon.Reset(opts.GetPath())
+	err := s.daemon.Reset(opts.GetId())
 	if err != nil {
 		return nil, err
 	}
 
-	return s.fetchServerInfo(opts.GetPath())
+	return s.fetchServerInfo(opts.GetId())
 }
 
-func (s *daemonServer) fetchServerInfo(path string) (*svctl.ServerInfo, error) {
-	status, err := s.daemon.Status(path)
+func (s *daemonServer) fetchServerInfo(id string) (*svctl.ServerInfo, error) {
+	status, err := s.daemon.Status(id)
 	if err != nil {
 		return nil, err
 	}
 
 	info := &svctl.ServerInfo{
-		Path:         path,
+		Path:         id,
 		SettingsPath: status.SettingsPath,
 		DesiredState: serverStateToProto(status.DesiredState),
 		CurrentState: serverStateToProto(status.CurrentState),
@@ -115,10 +117,21 @@ func (s *daemonServer) fetchServerInfo(path string) (*svctl.ServerInfo, error) {
 func serverStateToProto(state daemon.ServerState) svctl.State {
 	switch state {
 	case daemon.Running:
-		return svctl.State_RUNNING
+		return svctl.State_STATE_RUNNING
 	case daemon.Stopped:
-		return svctl.State_STOPPED
+		return svctl.State_STATE_STOPPED
 	default:
-		return svctl.State_STOPPED
+		return svctl.State_STATE_UNSPECIFIED
+	}
+}
+
+func serverTypeFromProto(t svctl.ServerType) daemon.ServerType {
+	switch t {
+	case svctl.ServerType_SERVER_TYPE_LOCAL:
+		return daemon.LocalServer
+	case svctl.ServerType_SERVER_TYPE_DOCKER:
+		return daemon.DockerServer
+	default:
+		return daemon.LocalServer
 	}
 }

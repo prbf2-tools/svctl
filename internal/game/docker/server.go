@@ -54,6 +54,10 @@ func Open(c *client.Client, containerName string) (*Container, error) {
 	}, nil
 }
 
+func (c *Container) ID() string {
+	return c.name
+}
+
 func (c *Container) Start() error {
 	return c.docker.ContainerStart(context.Background(), c.name, container.StartOptions{})
 }
@@ -130,7 +134,6 @@ func (c *Container) ReadFile(filePath string) ([]byte, error) {
 	ctx := context.Background()
 
 	fullPath := path.Join(c.workDir, filePath)
-	println(fullPath)
 
 	readCloser, stat, err := c.docker.CopyFromContainer(ctx, c.name, fullPath)
 	if err != nil {

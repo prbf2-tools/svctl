@@ -6,22 +6,20 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sboon-gg/svctl/svctl"
+	"github.com/sboon-gg/svctl/svctl/v1"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type statusOpts struct {
 	*serverOpts
-	*daemonOpts
+	*daemonConnOpts
 	json bool
 }
 
 func newStatusOpts() *statusOpts {
 	return &statusOpts{
-		serverOpts: newServerOpts(),
-		daemonOpts: newDaemonOpts(),
+		serverOpts:     newServerOpts(),
+		daemonConnOpts: newDaemonConnOpts(),
 	}
 }
 
@@ -43,28 +41,27 @@ func statusCmd() *cobra.Command {
 
 func (o *statusOpts) AddFlags(cmd *cobra.Command) {
 	o.serverOpts.AddFlags(cmd)
-	o.daemonOpts.AddFlags(cmd)
+	o.daemonConnOpts.AddFlags(cmd)
 
 	cmd.Flags().BoolVarP(&o.json, "json", "j", false, "Output as JSON")
 }
 
 func (o *statusOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.NewClient(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	c, conn, err := o.Client()
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
+		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.address(), err)
 	}
 	defer conn.Close()
-	c := svctl.NewServersClient(conn)
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
 
-	path, err := o.Path()
+	id, err := o.ID()
 	if err != nil {
 		return err
 	}
 
-	status, err := c.Status(ctx, &svctl.ServerOpts{Path: path})
+	status, err := c.Status(ctx, &svctl.ServerOpts{Id: id})
 	if err != nil {
 		return fmt.Errorf("error calling function Status: %v", err)
 	}

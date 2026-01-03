@@ -8,21 +8,19 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sboon-gg/svctl/svctl"
+	"github.com/sboon-gg/svctl/svctl/v1"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type registerOpts struct {
 	*serverOpts
-	*daemonOpts
+	*daemonConnOpts
 }
 
 func newRegisterOpts() *registerOpts {
 	return &registerOpts{
-		serverOpts: newServerOpts(),
-		daemonOpts: newDaemonOpts(),
+		serverOpts:     newServerOpts(),
+		daemonConnOpts: newDaemonConnOpts(),
 	}
 }
 
@@ -42,21 +40,20 @@ func registerCmd() *cobra.Command {
 
 func (o *registerOpts) AddFlags(cmd *cobra.Command) {
 	o.serverOpts.AddFlags(cmd)
-	o.daemonOpts.AddFlags(cmd)
+	o.daemonConnOpts.AddFlags(cmd)
 }
 
 func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.NewClient(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	c, conn, err := o.Client()
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
+		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.address(), err)
 	}
 	defer conn.Close()
-	c := svctl.NewServersClient(conn)
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
 
-	path, err := o.Path()
+	id, err := o.ID()
 	if err != nil {
 		return err
 	}
@@ -66,8 +63,8 @@ func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	r, err := c.Register(ctx, &svctl.ServerOpts{
-		Path:         path,
+	r, err := c.Register(ctx, &svctl.RegisterServerOpts{
+		Id:           id,
 		SettingsPath: settingsPath,
 	})
 	if err != nil {

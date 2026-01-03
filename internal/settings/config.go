@@ -20,7 +20,6 @@ type GameConfig struct {
 }
 
 type DockerConfig struct {
-	ContainerName string `yaml:"containerName"`
 }
 
 type PatchConfig struct {

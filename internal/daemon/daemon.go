@@ -76,18 +76,35 @@ func Recover(configFile string) (*Daemon, error) {
 		return nil, err
 	}
 
-	for svPath, sv := range d.ServerManager.ServersInfo {
+	for serverID, sv := range d.ServerManager.ServersInfo {
 		settingsPath := sv.SettingsPath
 		if !filepath.IsAbs(settingsPath) {
-			settingsPath = filepath.Join(svPath, sv.SettingsPath)
+			settingsPath = filepath.Join(serverID, sv.SettingsPath)
 		}
 
-		s, err := server.Open(
-			svPath,
-			settingsPath,
-		)
-		if err != nil {
-			slog.Error("Unable to open server", "svPath", svPath, "settingsPath", settingsPath, "err", err)
+		var s *server.Server
+
+		switch sv.Type {
+		case LocalServer:
+			s, err = server.OpenLocal(
+				serverID,
+				settingsPath,
+			)
+			if err != nil {
+				slog.Error("Unable to open local server", "serverID", serverID, "settingsPath", settingsPath, "err", err)
+				continue
+			}
+		case DockerServer:
+			s, err = server.OpenDocker(
+				serverID,
+				settingsPath,
+			)
+			if err != nil {
+				slog.Error("Unable to open docker server", "serverID", serverID, "settingsPath", settingsPath, "err", err)
+				continue
+			}
+		default:
+			slog.Error("Unknown server type", "serverID", serverID, "type", sv.Type)
 			continue
 		}
 
@@ -117,24 +134,35 @@ func Recover(configFile string) (*Daemon, error) {
 			}
 		}
 
-		d.Servers[svPath] = machine
+		d.Servers[serverID] = machine
 	}
 
 	return d, nil
 }
 
-func (s *Daemon) Register(serverPath, settingsPath string) error {
-	err := s.ServerManager.AddServer(serverPath, settingsPath)
+func (s *Daemon) Register(serverID, settingsPath string, typ ServerType) error {
+	err := s.ServerManager.AddServer(serverID, settingsPath, typ)
 	if err != nil {
 		return err
 	}
 
-	sv, err := server.Open(serverPath, settingsPath)
-	if err != nil {
-		return err
+	var sv *server.Server
+	switch typ {
+	case LocalServer:
+		sv, err = server.OpenLocal(serverID, settingsPath)
+		if err != nil {
+			return err
+		}
+	case DockerServer:
+		sv, err = server.OpenDocker(serverID, settingsPath)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unknown server type %q", typ)
 	}
 
-	s.Servers[serverPath] = fsm.New(sv, sv.Log, fsm.NewStateStopped())
+	s.Servers[serverID] = fsm.New(sv, sv.Log, fsm.NewStateStopped())
 
 	return nil
 }
@@ -201,8 +229,8 @@ type ServerStatus struct {
 	GameStatus   *server.Status
 }
 
-func (s *Daemon) Status(path string) (*ServerStatus, error) {
-	sv, err := s.findServer(path)
+func (s *Daemon) Status(id string) (*ServerStatus, error) {
+	sv, err := s.findServer(id)
 	if err != nil {
 		return nil, err
 	}
@@ -212,9 +240,9 @@ func (s *Daemon) Status(path string) (*ServerStatus, error) {
 		sv.Log.Error("Unable to get Gamespy 3 query status", "err", err)
 	}
 
-	info, ok := s.ServersInfo[path]
+	info, ok := s.ServersInfo[id]
 	if !ok {
-		return nil, fmt.Errorf("server %q not found", path)
+		return nil, fmt.Errorf("server %q not found", id)
 	}
 
 	status := ServerStatus{
@@ -233,10 +261,10 @@ func (s *Daemon) Status(path string) (*ServerStatus, error) {
 	return &status, nil
 }
 
-func (d *Daemon) findServer(path string) (*fsm.FSM, error) {
-	s, ok := d.Servers[path]
+func (d *Daemon) findServer(id string) (*fsm.FSM, error) {
+	s, ok := d.Servers[id]
 	if !ok {
-		return nil, fmt.Errorf("server %q not found", path)
+		return nil, fmt.Errorf("server %q not found", id)
 	}
 
 	return s, nil

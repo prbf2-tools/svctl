@@ -14,8 +14,16 @@ const (
 	Stopped ServerState = "stopped"
 )
 
+type ServerType string
+
+const (
+	LocalServer  ServerType = "local"
+	DockerServer ServerType = "docker"
+)
+
 type ServerInfo struct {
-	ServerPath   string      `yaml:"serverPath"`
+	ServerID     string      `yaml:"id"`
+	Type         ServerType  `yaml:"type"`
 	SettingsPath string      `yaml:"settingsPath"`
 	DesiredState ServerState `yaml:"desiredState"`
 }
@@ -43,13 +51,14 @@ func NewServerManager(cachePath string) (*ServerManager, error) {
 	}, nil
 }
 
-func (m *ServerManager) AddServer(serverPath, settingsPath string) error {
-	if _, ok := m.ServersInfo[serverPath]; ok {
-		return fmt.Errorf("server %q already exists", serverPath)
+func (m *ServerManager) AddServer(serverID, settingsPath string, typ ServerType) error {
+	if _, ok := m.ServersInfo[serverID]; ok {
+		return fmt.Errorf("server %q already exists", serverID)
 	}
 
-	m.ServersInfo[serverPath] = &ServerInfo{
-		ServerPath:   serverPath,
+	m.ServersInfo[serverID] = &ServerInfo{
+		ServerID:     serverID,
+		Type:         typ,
 		SettingsPath: settingsPath,
 		DesiredState: Stopped,
 	}

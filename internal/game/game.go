@@ -6,6 +6,7 @@ import (
 )
 
 type GameServer interface {
+	ID() string
 	Start() error
 	IsRunning() (bool, error)
 	Stop() error

@@ -9,11 +9,11 @@ require (
 	github.com/emilekm/go-prbf2 v0.0.0-20250305193713-36eade76571f
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/gocarina/gocsv v0.0.0-20231116093920-b87c2d0e983a
-	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/goccy/go-yaml v1.11.3
 	github.com/golangci/golangci-lint v1.57.1
 	github.com/samber/slog-multi v1.0.2
 	github.com/samber/slog-webhook/v2 v2.5.1
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/shirou/gopsutil/v3 v3.24.2
 	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.10.0
@@ -182,7 +182,6 @@ require (
 	github.com/samber/lo v1.38.1 // indirect
 	github.com/samber/slog-common v0.15.1 // indirect
 	github.com/sanposhiho/wastedassign/v2 v2.0.7 // indirect
-	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/sashamelentyev/interfacebloat v1.1.0 // indirect
 	github.com/sashamelentyev/usestdlibvars v1.25.0 // indirect
 	github.com/securego/gosec/v2 v2.19.0 // indirect

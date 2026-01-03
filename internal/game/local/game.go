@@ -43,6 +43,10 @@ func Open(path string) (*Server, error) {
 	return s, nil
 }
 
+func (s *Server) ID() string {
+	return s.path
+}
+
 func (s *Server) ReadFile(path string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(s.path, path))
 }

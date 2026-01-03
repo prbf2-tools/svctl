@@ -17,43 +17,43 @@ type Server struct {
 	settings.Settings
 }
 
-func Open(serverPath, settingsPath string) (*Server, error) {
+func Open(server game.GameServer, settingsPath string) (*Server, error) {
 	s, err := settings.Open(settingsPath)
 	if err != nil {
 		return nil, err
 	}
 
-	config, err := s.Config()
+	sv := &Server{
+		GameServer: server,
+		Settings:   *s,
+	}
+
+	sv.Log = sv.Log.With("server", server.ID())
+
+	return sv, nil
+}
+
+func OpenLocal(serverPath, settingsPath string) (*Server, error) {
+	g, err := local.Open(serverPath)
 	if err != nil {
 		return nil, err
 	}
 
-	var g game.GameServer
-	if config.Docker != nil {
-		c, err := client.NewClientWithOpts(client.FromEnv)
-		if err != nil {
-			return nil, err
-		}
+	return Open(g, settingsPath)
+}
 
-		g, err = docker.Open(c, config.Docker.ContainerName)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		g, err = local.Open(serverPath)
-		if err != nil {
-			return nil, err
-		}
+func OpenDocker(containerName, settingsPath string) (*Server, error) {
+	c, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		return nil, err
 	}
 
-	sv := &Server{
-		GameServer: g,
-		Settings:   *s,
+	g, err := docker.Open(c, containerName)
+	if err != nil {
+		return nil, err
 	}
 
-	sv.Log = sv.Log.With("server", filepath.Base(serverPath))
-
-	return sv, nil
+	return Open(g, settingsPath)
 }
 
 func (s *Server) Render(reloadableOnly bool) error {
