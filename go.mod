@@ -9,6 +9,7 @@ require (
 	github.com/emilekm/go-prbf2 v0.0.0-20250305193713-36eade76571f
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/gocarina/gocsv v0.0.0-20231116093920-b87c2d0e983a
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/goccy/go-yaml v1.11.3
 	github.com/golangci/golangci-lint v1.57.1
 	github.com/samber/slog-multi v1.0.2

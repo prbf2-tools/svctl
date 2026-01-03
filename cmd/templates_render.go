@@ -4,19 +4,20 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/goccy/go-yaml"
 	"github.com/sboon-gg/svctl/pkg/templates"
 	"github.com/spf13/cobra"
 )
 
 type templatesRenderOpts struct {
-	values     []string
+	*templatesOpts
 	outputPath string
 	dryRun     bool
 }
 
 func newTemplatesRenderOpts() *templatesRenderOpts {
-	return &templatesRenderOpts{}
+	return &templatesRenderOpts{
+		templatesOpts: newTemplatesOpts(),
+	}
 }
 
 func templatesRenderCmd() *cobra.Command {
@@ -36,11 +37,11 @@ func templatesRenderCmd() *cobra.Command {
 }
 
 func (opts *templatesRenderOpts) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringArrayVarP(&opts.values, "values", "f", []string{}, "Path to values file(s)")
+	opts.templatesOpts.AddFlags(cmd)
+
 	cmd.Flags().StringVarP(&opts.outputPath, "output", "o", "", "Path to output rendered files")
 	cmd.Flags().BoolVar(&opts.dryRun, "dry-run", false, "Print out rendered files")
 
-	cmd.MarkFlagFilename("values", "yaml", "yml", "json")
 	cmd.MarkFlagDirname("output")
 	cmd.MarkFlagsOneRequired("output", "dry-run")
 	cmd.MarkFlagsMutuallyExclusive("output", "dry-run")
@@ -52,24 +53,10 @@ func (opts *templatesRenderOpts) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	valuesSources := make([]templates.Values, len(opts.values))
-	for i, path := range opts.values {
-		var values templates.Values
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-
-		err = yaml.NewDecoder(file).Decode(&values)
-		file.Close()
-		if err != nil {
-			return err
-		}
-
-		valuesSources[i] = values
+	mergedValues, err := opts.MergedValues()
+	if err != nil {
+		return err
 	}
-
-	mergedValues, err := templates.MergeValues(valuesSources...)
 
 	outputs, err := renderer.Render(nil, mergedValues)
 	if err != nil {

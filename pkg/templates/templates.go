@@ -7,11 +7,13 @@ import (
 	"text/template"
 
 	"dario.cat/mergo"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )
 
 const (
 	configFileName = "config.yaml"
+	schemaFileName = "schema.json"
 )
 
 type Values map[string]any
@@ -193,6 +195,20 @@ func (t *Renderer) Defaults() (Values, error) {
 	}
 
 	return defaults, nil
+}
+
+func (t *Renderer) Schema() (*jsonschema.Schema, error) {
+	schemaContent, err := fs.ReadFile(t.files, schemaFileName)
+	if err != nil {
+		return nil, err
+	}
+
+	schema, err := jsonschema.CompileString("schema.json", string(schemaContent))
+	if err != nil {
+		return nil, err
+	}
+
+	return schema, nil
 }
 
 func MergeValues(sources ...Values) (Values, error) {
