@@ -8,6 +8,7 @@ import (
 	"github.com/sboon-gg/svctl/internal/game"
 	"github.com/sboon-gg/svctl/internal/game/docker"
 	"github.com/sboon-gg/svctl/internal/game/local"
+	"github.com/sboon-gg/svctl/internal/game/systemd"
 	"github.com/sboon-gg/svctl/internal/settings"
 	"github.com/sboon-gg/svctl/pkg/templates"
 )
@@ -49,6 +50,15 @@ func OpenDocker(containerName, settingsPath string) (*Server, error) {
 	}
 
 	g, err := docker.Open(c, containerName)
+	if err != nil {
+		return nil, err
+	}
+
+	return Open(g, settingsPath)
+}
+
+func OpenSystemd(serviceName, settingsPath string) (*Server, error) {
+	g, err := systemd.Open(serviceName)
 	if err != nil {
 		return nil, err
 	}

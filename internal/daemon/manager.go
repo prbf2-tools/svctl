@@ -17,8 +17,9 @@ const (
 type ServerType string
 
 const (
-	LocalServer  ServerType = "local"
-	DockerServer ServerType = "docker"
+	LocalServer   ServerType = "local"
+	DockerServer  ServerType = "docker"
+	SystemdServer ServerType = "systemd"
 )
 
 type ServerInfo struct {

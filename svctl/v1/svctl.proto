@@ -20,6 +20,7 @@ enum ServerType {
   SERVER_TYPE_UNSPECIFIED = 0;
   SERVER_TYPE_LOCAL = 1;
   SERVER_TYPE_DOCKER = 2;
+  SERVER_TYPE_SYSTEMD = 3;
 }
 
 message RegisterServerOpts {

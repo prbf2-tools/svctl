@@ -29,7 +29,7 @@ func registerCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "register",
-		Short: "register a new user",
+		Short: "register a new server",
 		RunE:  opts.Run,
 	}
 

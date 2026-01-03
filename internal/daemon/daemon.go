@@ -103,6 +103,15 @@ func Recover(configFile string) (*Daemon, error) {
 				slog.Error("Unable to open docker server", "serverID", serverID, "settingsPath", settingsPath, "err", err)
 				continue
 			}
+		case SystemdServer:
+			s, err = server.OpenSystemd(
+				serverID,
+				settingsPath,
+			)
+			if err != nil {
+				slog.Error("Unable to open systemd server", "serverID", serverID, "settingsPath", settingsPath, "err", err)
+				continue
+			}
 		default:
 			slog.Error("Unknown server type", "serverID", serverID, "type", sv.Type)
 			continue
@@ -155,6 +164,11 @@ func (s *Daemon) Register(serverID, settingsPath string, typ ServerType) error {
 		}
 	case DockerServer:
 		sv, err = server.OpenDocker(serverID, settingsPath)
+		if err != nil {
+			return err
+		}
+	case SystemdServer:
+		sv, err = server.OpenSystemd(serverID, settingsPath)
 		if err != nil {
 			return err
 		}

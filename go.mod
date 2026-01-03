@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	dario.cat/mergo v1.0.0
 	github.com/Masterminds/sprig/v3 v3.2.3
+	github.com/coreos/go-systemd/v22 v22.3.2
 	github.com/docker/docker v28.0.1+incompatible
 	github.com/emilekm/go-prbf2 v0.0.0-20250305193713-36eade76571f
 	github.com/go-git/go-git/v5 v5.11.0
@@ -96,6 +97,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/go-xmlfmt/xmlfmt v1.1.2 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
+	github.com/godbus/dbus/v5 v5.0.4 // indirect
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect

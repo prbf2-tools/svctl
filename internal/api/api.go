@@ -131,6 +131,8 @@ func serverTypeFromProto(t svctl.ServerType) daemon.ServerType {
 		return daemon.LocalServer
 	case svctl.ServerType_SERVER_TYPE_DOCKER:
 		return daemon.DockerServer
+	case svctl.ServerType_SERVER_TYPE_SYSTEMD:
+		return daemon.SystemdServer
 	default:
 		return daemon.LocalServer
 	}
