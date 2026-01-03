@@ -9,7 +9,7 @@ import (
 
 	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/coreos/go-systemd/v22/unit"
-	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/prbf2-tools/svctl/internal/game"
 )
 
 var _ game.GameServer = &Service{}

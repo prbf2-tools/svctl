@@ -1,4 +1,4 @@
-module github.com/sboon-gg/svctl
+module github.com/prbf2-tools/svctl
 
 go 1.24.1
 

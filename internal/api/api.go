@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 
-	"github.com/sboon-gg/svctl/internal/daemon"
-	"github.com/sboon-gg/svctl/svctl/v1"
+	"github.com/prbf2-tools/svctl/internal/daemon"
+	"github.com/prbf2-tools/svctl/svctl/v1"
 )
 
 type daemonServer struct {

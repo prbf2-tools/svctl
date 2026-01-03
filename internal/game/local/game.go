@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/prbf2-tools/svctl/internal/game"
 )
 
 const (

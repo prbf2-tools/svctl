@@ -11,7 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/goccy/go-yaml"
-	"github.com/sboon-gg/svctl/pkg/templates"
+	"github.com/prbf2-tools/svctl/pkg/templates"
 )
 
 func (s *Settings) TemplateData() (templates.Values, *GameConfig, error) {

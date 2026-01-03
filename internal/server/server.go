@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 
 	"github.com/docker/docker/client"
-	"github.com/sboon-gg/svctl/internal/game"
-	"github.com/sboon-gg/svctl/internal/game/docker"
-	"github.com/sboon-gg/svctl/internal/game/local"
-	"github.com/sboon-gg/svctl/internal/game/systemd"
-	"github.com/sboon-gg/svctl/internal/settings"
-	"github.com/sboon-gg/svctl/pkg/templates"
+	"github.com/prbf2-tools/svctl/internal/game"
+	"github.com/prbf2-tools/svctl/internal/game/docker"
+	"github.com/prbf2-tools/svctl/internal/game/local"
+	"github.com/prbf2-tools/svctl/internal/game/systemd"
+	"github.com/prbf2-tools/svctl/internal/settings"
+	"github.com/prbf2-tools/svctl/pkg/templates"
 )
 
 type Server struct {

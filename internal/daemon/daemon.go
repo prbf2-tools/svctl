@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sboon-gg/svctl/internal/fsm"
-	"github.com/sboon-gg/svctl/internal/server"
+	"github.com/prbf2-tools/svctl/internal/fsm"
+	"github.com/prbf2-tools/svctl/internal/server"
 )
 
 const (

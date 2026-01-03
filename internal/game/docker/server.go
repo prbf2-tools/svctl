@@ -11,7 +11,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/prbf2-tools/svctl/internal/game"
 )
 
 var _ game.GameServer = &Container{}

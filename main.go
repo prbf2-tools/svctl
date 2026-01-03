@@ -6,7 +6,7 @@ package main
 import (
 	"os"
 
-	"github.com/sboon-gg/svctl/cmd"
+	"github.com/prbf2-tools/svctl/cmd"
 )
 
 func main() {
