@@ -76,7 +76,7 @@ func Recover(configFile string) (*Daemon, error) {
 		return nil, err
 	}
 
-	for serverID, sv := range d.ServerManager.ServersInfo {
+	for serverID, sv := range d.ServersInfo {
 		settingsPath := sv.SettingsPath
 		if !filepath.IsAbs(settingsPath) {
 			settingsPath = filepath.Join(serverID, sv.SettingsPath)
@@ -150,7 +150,7 @@ func Recover(configFile string) (*Daemon, error) {
 }
 
 func (s *Daemon) Register(serverID, settingsPath string, typ ServerType) error {
-	err := s.ServerManager.AddServer(serverID, settingsPath, typ)
+	err := s.AddServer(serverID, settingsPath, typ)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (s *Daemon) Start(path string) error {
 		return err
 	}
 
-	err = s.ServerManager.ChangeState(path, Running)
+	err = s.ChangeState(path, Running)
 	if err != nil {
 		return err
 	}
@@ -207,7 +207,7 @@ func (s *Daemon) Stop(path string) error {
 		return err
 	}
 
-	err = s.ServerManager.ChangeState(path, Stopped)
+	err = s.ChangeState(path, Stopped)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func (s *Daemon) Reset(path string) error {
 	}
 
 	sv.Log.Info("Reseting server", "op", "Daemon.Reset")
-	err = s.ServerManager.ChangeState(path, Stopped)
+	err = s.ChangeState(path, Stopped)
 	if err != nil {
 		return err
 	}

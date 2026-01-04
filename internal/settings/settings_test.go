@@ -89,7 +89,9 @@ func createRepoFromTemplatesDir(t *testing.T, templatesDir, repoDir string) {
 		if err != nil {
 			return err
 		}
-		defer in.Close()
+		defer func() {
+			_ = in.Close()
+		}()
 
 		out, err := os.Create(dst)
 		if err != nil {

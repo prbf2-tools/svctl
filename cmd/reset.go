@@ -47,7 +47,12 @@ func (o *resetOpts) Run(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.address(), err)
 	}
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			cmd.PrintErrf("error closing connection: %v\n", err)
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()

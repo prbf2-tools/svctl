@@ -74,7 +74,9 @@ func (s *Server) WriteFileFromReader(path string, r io.Reader, _ int64) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	_, err = io.Copy(f, r)
 	return err

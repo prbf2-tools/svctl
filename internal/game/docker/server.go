@@ -40,7 +40,9 @@ func Open(c *client.Client, containerName string) (*Container, error) {
 
 	readCloser := copyResult.Content
 
-	defer readCloser.Close()
+	defer func() {
+		_ = readCloser.Close()
+	}()
 
 	tarReader := tar.NewReader(readCloser)
 	header, err := tarReader.Next()
@@ -103,8 +105,8 @@ func (c *Container) WriteFileFromReader(filePath string, reader io.Reader, size 
 	}
 
 	defer func() {
-		f.Close()
-		os.Remove(f.Name())
+		_ = f.Close()
+		_ = os.Remove(f.Name())
 	}()
 
 	tarWriter := tar.NewWriter(f)
@@ -156,7 +158,9 @@ func (c *Container) ReadFile(filePath string) ([]byte, error) {
 
 	readCloser := copyResult.Content
 
-	defer readCloser.Close()
+	defer func() {
+		_ = readCloser.Close()
+	}()
 
 	if copyResult.Stat.Mode.IsDir() {
 		return nil, game.ErrIsDir

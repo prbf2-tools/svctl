@@ -34,12 +34,16 @@ func renderCmd() *cobra.Command {
 		},
 	}
 
+	opts.AddFlags(cmd)
+
+	return cmd
+}
+
+func (opts *renderOpts) AddFlags(cmd *cobra.Command) {
 	opts.serverOpts.AddFlags(cmd)
 
 	cmd.Flags().BoolVar(&opts.dryRun, "dry-run", false, "Print out rendered files")
 	cmd.Flags().BoolVar(&opts.reloadableOnly, "reloadable-only", false, "Only render reloadable templates")
-
-	return cmd
 }
 
 func (opts *renderOpts) Run(cmd *cobra.Command) error {

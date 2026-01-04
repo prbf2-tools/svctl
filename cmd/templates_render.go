@@ -42,7 +42,7 @@ func (opts *templatesRenderOpts) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&opts.outputPath, "output", "o", "", "Path to output rendered files")
 	cmd.Flags().BoolVar(&opts.dryRun, "dry-run", false, "Print out rendered files")
 
-	cmd.MarkFlagDirname("output")
+	_ = cmd.MarkFlagDirname("output")
 	cmd.MarkFlagsOneRequired("output", "dry-run")
 	cmd.MarkFlagsMutuallyExclusive("output", "dry-run")
 }

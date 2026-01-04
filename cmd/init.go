@@ -28,11 +28,16 @@ func initCmd() *cobra.Command {
 		},
 	}
 
-	opts.serverOpts.AddFlags(cmd)
-	cmd.Flags().StringVar(&opts.templatesRepo, "templates-repo", "", "Repository with templates")
-	cmd.Flags().StringVar(&opts.token, "token", "", "Token to use when cloning templates repo")
+	opts.AddFlags(cmd)
 
 	return cmd
+}
+
+func (opts *initOpts) AddFlags(cmd *cobra.Command) {
+	opts.serverOpts.AddFlags(cmd)
+
+	cmd.Flags().StringVar(&opts.templatesRepo, "templates-repo", "", "Repository with templates")
+	cmd.Flags().StringVar(&opts.token, "token", "", "Token to use when cloning templates repo")
 }
 
 func (opts *initOpts) Run() error {

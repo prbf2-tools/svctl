@@ -36,8 +36,8 @@ func (opts *serverOpts) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&opts.containerName, "container", "c", "", "Name of the Docker container")
 	cmd.Flags().StringVar(&opts.settingsPath, "settings", opts.settingsPath, "Path to settings directory")
 
-	cmd.MarkFlagDirname("path")
-	cmd.MarkFlagDirname("settings")
+	_ = cmd.MarkFlagDirname("path")
+	_ = cmd.MarkFlagDirname("settings")
 	cmd.MarkFlagsMutuallyExclusive("path", "container")
 	cmd.MarkFlagsOneRequired("path", "container")
 }

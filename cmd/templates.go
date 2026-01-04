@@ -18,7 +18,7 @@ func newTemplatesOpts() *templatesOpts {
 
 func (opts *templatesOpts) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringArrayVarP(&opts.values, "values", "f", []string{}, "Path to values file(s)")
-	cmd.MarkFlagFilename("values", "yaml", "yml", "json")
+	_ = cmd.MarkFlagFilename("values", "yaml", "yml", "json")
 }
 
 func (opts *templatesOpts) MergedValues() (templates.Values, error) {
@@ -31,7 +31,7 @@ func (opts *templatesOpts) MergedValues() (templates.Values, error) {
 		}
 
 		err = yaml.NewDecoder(file).Decode(&values)
-		file.Close()
+		_ = file.Close()
 		if err != nil {
 			return nil, err
 		}

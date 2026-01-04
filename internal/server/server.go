@@ -44,7 +44,7 @@ func OpenLocal(serverPath, settingsPath string) (*Server, error) {
 }
 
 func OpenDocker(containerName, settingsPath string) (*Server, error) {
-	c, err := client.NewClientWithOpts(client.FromEnv)
+	c, err := client.New(client.FromEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -67,16 +67,16 @@ func OpenSystemd(serviceName, settingsPath string) (*Server, error) {
 }
 
 func (s *Server) Render(reloadableOnly bool) error {
-	if s.Settings.Templates == nil {
+	if s.Templates == nil {
 		return nil
 	}
 
-	values, gameConfig, err := s.Settings.TemplateData()
+	values, gameConfig, err := s.TemplateData()
 	if err != nil {
 		return err
 	}
 
-	outputs, err := s.Settings.Templates.Render(gameConfig, values)
+	outputs, err := s.Templates.Render(gameConfig, values)
 	if err != nil {
 		return err
 	}
@@ -96,20 +96,20 @@ func (s *Server) Render(reloadableOnly bool) error {
 }
 
 func (s *Server) DryRender() ([]templates.RenderOutput, error) {
-	if s.Settings.Templates == nil {
+	if s.Templates == nil {
 		return nil, nil
 	}
 
-	values, gameConfig, err := s.Settings.TemplateData()
+	values, gameConfig, err := s.TemplateData()
 	if err != nil {
 		return nil, err
 	}
 
-	return s.Settings.Templates.Render(gameConfig, values)
+	return s.Templates.Render(gameConfig, values)
 }
 
 func (s *Server) ApplyPatches() error {
-	cfg, err := s.Settings.Config()
+	cfg, err := s.Config()
 	if err != nil {
 		return err
 	}
@@ -119,11 +119,13 @@ func (s *Server) ApplyPatches() error {
 			continue
 		}
 
-		f, err := os.Open(filepath.Join(s.Settings.Path, patch.Source))
+		f, err := os.Open(filepath.Join(s.Path, patch.Source))
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		stat, err := f.Stat()
 		if err != nil {

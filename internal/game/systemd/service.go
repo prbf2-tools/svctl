@@ -38,7 +38,9 @@ func Open(serviceName string) (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer unitFile.Close()
+	defer func() {
+		_ = unitFile.Close()
+	}()
 
 	unitOptions, err := unit.DeserializeOptions(unitFile)
 	if err != nil {
@@ -135,7 +137,10 @@ func (c *Service) WriteFileFromReader(path string, r io.Reader, _ int64) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Sync()
+		_ = f.Close()
+	}()
 
 	_, err = io.Copy(f, r)
 	return err
