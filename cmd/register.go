@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sboon-gg/svctl/svctl/v1"
+	"github.com/prbf2-tools/svctl/svctl/v1"
 	"github.com/spf13/cobra"
 )
 

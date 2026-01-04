@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/sboon-gg/svctl/internal/settings"
+	"github.com/prbf2-tools/svctl/internal/settings"
 	"github.com/spf13/cobra"
 )
 

@@ -4,9 +4,9 @@ import (
 	"log"
 	"net"
 
-	"github.com/sboon-gg/svctl/internal/api"
-	"github.com/sboon-gg/svctl/internal/daemon"
-	"github.com/sboon-gg/svctl/svctl/v1"
+	"github.com/prbf2-tools/svctl/internal/api"
+	"github.com/prbf2-tools/svctl/internal/daemon"
+	"github.com/prbf2-tools/svctl/svctl/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )

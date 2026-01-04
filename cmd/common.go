@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sboon-gg/svctl/internal/server"
-	"github.com/sboon-gg/svctl/svctl/v1"
+	"github.com/prbf2-tools/svctl/internal/server"
+	"github.com/prbf2-tools/svctl/svctl/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

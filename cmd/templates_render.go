@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sboon-gg/svctl/pkg/templates"
+	"github.com/prbf2-tools/svctl/pkg/templates"
 	"github.com/spf13/cobra"
 )
 
