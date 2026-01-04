@@ -1,12 +1,11 @@
 module github.com/prbf2-tools/svctl
 
-go 1.24.1
+go 1.25.5
 
 require (
 	dario.cat/mergo v1.0.2
 	github.com/Masterminds/sprig/v3 v3.3.0
 	github.com/coreos/go-systemd/v22 v22.6.0
-	github.com/emilekm/go-prbf2 v0.0.0-20251211144904-8368b37fb63f
 	github.com/go-git/go-git/v5 v5.16.4
 	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1
 	github.com/goccy/go-yaml v1.19.1
@@ -45,7 +44,6 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
