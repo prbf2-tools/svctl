@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/docker/client"
+	"github.com/moby/moby/client"
 	"github.com/prbf2-tools/svctl/internal/game"
 	"github.com/prbf2-tools/svctl/internal/game/docker"
 	"github.com/prbf2-tools/svctl/internal/game/local"

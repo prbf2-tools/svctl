@@ -249,10 +249,10 @@ func (s *Daemon) Status(id string) (*ServerStatus, error) {
 		return nil, err
 	}
 
-	gameStatus, err := sv.Server().Status()
-	if err != nil {
-		sv.Log.Error("Unable to get Gamespy 3 query status", "err", err)
-	}
+	// gameStatus, err := sv.Server().Status()
+	// if err != nil {
+	// 	sv.Log.Error("Unable to get Gamespy 3 query status", "err", err)
+	// }
 
 	info, ok := s.ServersInfo[id]
 	if !ok {
@@ -263,7 +263,7 @@ func (s *Daemon) Status(id string) (*ServerStatus, error) {
 		DesiredState: info.DesiredState,
 		CurrentState: Stopped,
 		SettingsPath: info.SettingsPath,
-		GameStatus:   gameStatus,
+		// GameStatus:   gameStatus,
 	}
 
 	if sv.Server() != nil {
