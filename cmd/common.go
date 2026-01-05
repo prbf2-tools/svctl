@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -22,6 +23,7 @@ const (
 type serverOpts struct {
 	serverPath    string
 	containerName string
+	serviceName   string
 	settingsPath  string
 }
 
@@ -34,24 +36,26 @@ func newServerOpts() *serverOpts {
 func (opts *serverOpts) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&opts.serverPath, "path", "p", "", "Path to server directory")
 	cmd.Flags().StringVarP(&opts.containerName, "container", "c", "", "Name of the Docker container")
+	cmd.Flags().StringVarP(&opts.serviceName, "service", "s", "", "Name of the systemd service")
 	cmd.Flags().StringVar(&opts.settingsPath, "settings", opts.settingsPath, "Path to settings directory")
 
 	_ = cmd.MarkFlagDirname("path")
 	_ = cmd.MarkFlagDirname("settings")
-	cmd.MarkFlagsMutuallyExclusive("path", "container")
-	cmd.MarkFlagsOneRequired("path", "container")
+	cmd.MarkFlagsMutuallyExclusive("path", "container", "service")
+	cmd.MarkFlagsOneRequired("path", "container", "service")
 }
 
 func (opts *serverOpts) ID() (string, error) {
-	if opts.containerName != "" {
+	switch {
+	case opts.serviceName != "":
+		return opts.serviceName, nil
+	case opts.containerName != "":
 		return opts.containerName, nil
+	case opts.serverPath != "":
+		return concatWithWorkingDir(opts.serverPath)
+	default:
+		return "", fmt.Errorf("no server identifier provided")
 	}
-
-	if filepath.IsAbs(opts.serverPath) {
-		return opts.serverPath, nil
-	}
-
-	return concatWithWorkingDir(opts.serverPath)
 }
 
 func (opts *serverOpts) SettingsPath() (string, error) {
@@ -60,6 +64,19 @@ func (opts *serverOpts) SettingsPath() (string, error) {
 	}
 
 	return concatWithWorkingDir(opts.settingsPath)
+}
+
+func (opts *serverOpts) serverType() svctl.ServerType {
+	switch {
+	case opts.serviceName != "":
+		return svctl.ServerType_SERVER_TYPE_SYSTEMD
+	case opts.containerName != "":
+		return svctl.ServerType_SERVER_TYPE_DOCKER
+	case opts.serverPath != "":
+		return svctl.ServerType_SERVER_TYPE_LOCAL
+	default:
+		return svctl.ServerType_SERVER_TYPE_UNSPECIFIED
+	}
 }
 
 func concatWithWorkingDir(path string) (string, error) {
@@ -82,11 +99,16 @@ func (opts *serverOpts) Server() (*server.Server, error) {
 		return nil, err
 	}
 
-	if opts.containerName != "" {
+	switch {
+	case opts.serviceName != "":
+		return server.OpenSystemd(id, svctlPath)
+	case opts.containerName != "":
 		return server.OpenDocker(id, svctlPath)
+	case opts.serverPath != "":
+		return server.OpenLocal(id, svctlPath)
 	}
 
-	return server.OpenLocal(id, svctlPath)
+	return nil, fmt.Errorf("no server identifier provided")
 }
 
 type daemonConnOpts struct {

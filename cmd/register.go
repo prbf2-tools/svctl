@@ -71,6 +71,7 @@ func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
 	r, err := c.Register(ctx, &svctl.RegisterServerOpts{
 		Id:           id,
 		SettingsPath: settingsPath,
+		Type:         o.serverType(),
 	})
 	if err != nil {
 		return fmt.Errorf("error calling function Register: %v", err)
