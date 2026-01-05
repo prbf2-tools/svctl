@@ -35,21 +35,29 @@ type ServerManager struct {
 }
 
 func NewServerManager(cachePath string) (*ServerManager, error) {
+	manager := &ServerManager{
+		ServersInfo: make(map[string]*ServerInfo),
+		cachePath:   cachePath,
+	}
+
 	content, err := os.ReadFile(cachePath)
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 
-	servers := make(map[string]*ServerInfo)
-	err = yaml.Unmarshal(content, &servers)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return manager, nil
+		}
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(content, &manager.ServersInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ServerManager{
-		ServersInfo: servers,
-		cachePath:   cachePath,
-	}, nil
+	return manager, nil
 }
 
 func (m *ServerManager) AddServer(serverID, settingsPath string, typ ServerType) error {
