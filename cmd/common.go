@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -82,7 +83,7 @@ func (o *daemonConnOpts) address() string {
 func (o *daemonConnOpts) Client() (svctl.ServersClient, *grpc.ClientConn, error) {
 	conn, err := grpc.NewClient(o.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to connect to gRPC server at %s: %w", o.address(), err)
 	}
 
 	client := svctl.NewServersClient(conn)

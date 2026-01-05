@@ -45,7 +45,7 @@ func (o *startOpts) AddFlags(cmd *cobra.Command) {
 func (o *startOpts) Run(cmd *cobra.Command, args []string) error {
 	c, conn, err := o.Client()
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.address(), err)
+		return err
 	}
 	defer func() {
 		err := conn.Close()

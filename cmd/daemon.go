@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"net"
 
 	"github.com/prbf2-tools/svctl/internal/api"
@@ -48,12 +48,12 @@ func (o *daemonOpts) Run(cmd *cobra.Command, args []string) error {
 
 	lis, err := net.Listen("tcp", o.address())
 	if err != nil {
-		log.Fatalf("failed to listen on address %s: %v", o.address(), err)
+		return fmt.Errorf("failed to listen on address %s: %w", o.address(), err)
 	}
 
 	s := grpc.NewServer()
 	svctl.RegisterServersServer(s, api.NewDaemonServer(d))
-	log.Printf("gRPC server listening at %v", lis.Addr())
+	cmd.Printf("gRPC server listening at %v", lis.Addr())
 
 	go func() {
 		<-cmd.Context().Done()
@@ -61,7 +61,7 @@ func (o *daemonOpts) Run(cmd *cobra.Command, args []string) error {
 	}()
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		return fmt.Errorf("failed to serve: %w", err)
 	}
 
 	return nil
