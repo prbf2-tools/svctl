@@ -23,8 +23,9 @@ const (
 )
 
 type ServerInfo struct {
-	ServerID     string      `yaml:"id"`
+	ID           string      `yaml:"id"`
 	Type         ServerType  `yaml:"type"`
+	Location     string      `yaml:"location"`
 	SettingsPath string      `yaml:"settingsPath"`
 	DesiredState ServerState `yaml:"desiredState"`
 }
@@ -60,13 +61,14 @@ func NewServerManager(cachePath string) (*ServerManager, error) {
 	return manager, nil
 }
 
-func (m *ServerManager) AddServer(serverID, settingsPath string, typ ServerType) error {
+func (m *ServerManager) AddServer(serverID, location, settingsPath string, typ ServerType) error {
 	if _, ok := m.ServersInfo[serverID]; ok {
 		return fmt.Errorf("server %q already exists", serverID)
 	}
 
 	m.ServersInfo[serverID] = &ServerInfo{
-		ServerID:     serverID,
+		ID:           serverID,
+		Location:     location,
 		Type:         typ,
 		SettingsPath: settingsPath,
 		DesiredState: Stopped,

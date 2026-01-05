@@ -10,14 +10,12 @@ import (
 )
 
 type resetOpts struct {
-	*serverOpts
-	*daemonConnOpts
+	*grpcClientCmdOpts
 }
 
 func newResetOpts() *resetOpts {
 	return &resetOpts{
-		serverOpts:     newServerOpts(),
-		daemonConnOpts: newDaemonConnOpts(),
+		grpcClientCmdOpts: newGrpcClientCmdOpts(),
 	}
 }
 
@@ -25,21 +23,18 @@ func resetCmd() *cobra.Command {
 	opts := newResetOpts()
 
 	cmd := &cobra.Command{
-		Use:          "reset",
+		Use:          "reset <server-id>",
 		Short:        "Resets the server",
 		Long:         `Send a reset signal to daemon to reset the server`,
 		SilenceUsage: true,
+		PreRunE:      opts.PreRunE,
+		Args:         cobra.ExactArgs(1),
 		RunE:         opts.Run,
 	}
 
 	opts.AddFlags(cmd)
 
 	return cmd
-}
-
-func (o *resetOpts) AddFlags(cmd *cobra.Command) {
-	o.serverOpts.AddFlags(cmd)
-	o.daemonConnOpts.AddFlags(cmd)
 }
 
 func (o *resetOpts) Run(cmd *cobra.Command, args []string) error {
@@ -57,12 +52,7 @@ func (o *resetOpts) Run(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
 
-	id, err := o.ID()
-	if err != nil {
-		return err
-	}
-
-	r, err := c.Reset(ctx, &svctl.ServerOpts{Id: id})
+	r, err := c.Reset(ctx, &svctl.ServerOpts{Id: o.id})
 	if err != nil {
 		return fmt.Errorf("error calling function Reset: %v", err)
 	}

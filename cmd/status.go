@@ -11,15 +11,13 @@ import (
 )
 
 type statusOpts struct {
-	*serverOpts
-	*daemonConnOpts
+	*grpcClientCmdOpts
 	json bool
 }
 
 func newStatusOpts() *statusOpts {
 	return &statusOpts{
-		serverOpts:     newServerOpts(),
-		daemonConnOpts: newDaemonConnOpts(),
+		grpcClientCmdOpts: newGrpcClientCmdOpts(),
 	}
 }
 
@@ -27,10 +25,12 @@ func statusCmd() *cobra.Command {
 	opts := newStatusOpts()
 
 	cmd := &cobra.Command{
-		Use:          "status",
+		Use:          "status <server-id>",
 		Short:        "Server status",
 		Long:         `Display the status of the server`,
 		SilenceUsage: true,
+		PreRunE:      opts.PreRunE,
+		Args:         cobra.ExactArgs(1),
 		RunE:         opts.Run,
 	}
 
@@ -40,8 +40,7 @@ func statusCmd() *cobra.Command {
 }
 
 func (o *statusOpts) AddFlags(cmd *cobra.Command) {
-	o.serverOpts.AddFlags(cmd)
-	o.daemonConnOpts.AddFlags(cmd)
+	o.grpcClientCmdOpts.AddFlags(cmd)
 
 	cmd.Flags().BoolVarP(&o.json, "json", "j", false, "Output as JSON")
 }
@@ -61,12 +60,7 @@ func (o *statusOpts) Run(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
 
-	id, err := o.ID()
-	if err != nil {
-		return err
-	}
-
-	status, err := c.Status(ctx, &svctl.ServerOpts{Id: id})
+	status, err := c.Status(ctx, &svctl.ServerOpts{Id: o.id})
 	if err != nil {
 		return fmt.Errorf("error calling function Status: %v", err)
 	}
@@ -82,7 +76,7 @@ func (o *statusOpts) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	cmd.Printf("Server Info:\n")
-	cmd.Printf("  Path: %s\n", status.Path)
+	cmd.Printf("  Path: %s\n", status.Location)
 	cmd.Printf("  Settings Path: %s\n", status.SettingsPath)
 	cmd.Printf("  Desired State: %v\n", status.DesiredState)
 	cmd.Printf("  Current State: %v\n", status.CurrentState)

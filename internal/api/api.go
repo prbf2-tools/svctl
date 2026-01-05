@@ -21,7 +21,7 @@ func NewDaemonServer(daemon *daemon.Daemon) svctl.ServersServer {
 func (s *daemonServer) Register(ctx context.Context, opts *svctl.RegisterServerOpts) (*svctl.ServerInfo, error) {
 	typ := serverTypeFromProto(opts.GetType())
 
-	err := s.daemon.Register(opts.GetId(), opts.GetSettingsPath(), typ)
+	err := s.daemon.Register(opts.GetId(), opts.GetLocation(), opts.GetSettingsPath(), typ)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,8 @@ func (s *daemonServer) fetchServerInfo(id string) (*svctl.ServerInfo, error) {
 	}
 
 	info := &svctl.ServerInfo{
-		Path:         id,
+		Id:           id,
+		Location:     status.Location,
 		SettingsPath: status.SettingsPath,
 		DesiredState: serverStateToProto(status.DesiredState),
 		CurrentState: serverStateToProto(status.CurrentState),

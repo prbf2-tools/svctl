@@ -10,14 +10,12 @@ import (
 )
 
 type startOpts struct {
-	*serverOpts
-	*daemonConnOpts
+	*grpcClientCmdOpts
 }
 
 func newStartOpts() *startOpts {
 	return &startOpts{
-		serverOpts:     newServerOpts(),
-		daemonConnOpts: newDaemonConnOpts(),
+		grpcClientCmdOpts: newGrpcClientCmdOpts(),
 	}
 }
 
@@ -25,10 +23,12 @@ func startCmd() *cobra.Command {
 	opts := newStartOpts()
 
 	cmd := &cobra.Command{
-		Use:          "start",
+		Use:          "start <server-id>",
 		Short:        "Starts the server",
 		Long:         `Send a start signal to daemon to start the server`,
 		SilenceUsage: true,
+		PreRunE:      opts.PreRunE,
+		Args:         cobra.ExactArgs(1),
 		RunE:         opts.Run,
 	}
 
@@ -57,12 +57,7 @@ func (o *startOpts) Run(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
 
-	id, err := o.ID()
-	if err != nil {
-		return err
-	}
-
-	r, err := c.Start(ctx, &svctl.ServerOpts{Id: id})
+	r, err := c.Start(ctx, &svctl.ServerOpts{Id: o.id})
 	if err != nil {
 		return fmt.Errorf("error calling function Start: %v", err)
 	}

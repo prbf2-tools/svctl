@@ -14,8 +14,6 @@ service Servers {
 
 message ServerOpts { string id = 1; }
 
-message StartRequest { ServerOpts server = 1; }
-
 enum ServerType {
   SERVER_TYPE_UNSPECIFIED = 0;
   SERVER_TYPE_LOCAL = 1;
@@ -25,8 +23,9 @@ enum ServerType {
 
 message RegisterServerOpts {
   string id = 1;
-  string settings_path = 2;
-  ServerType type = 3;
+  string location = 2;
+  string settings_path = 3;
+  ServerType type = 4;
 }
 
 enum Status {
@@ -53,10 +52,11 @@ message GameStatus {
 }
 
 message ServerInfo {
-  string path = 1;
-  string settings_path = 2;
-  Status status = 3;
-  State desired_state = 4;
-  State current_state = 5;
-  GameStatus game_status = 6;
+  string id = 1;
+  string location = 2;
+  string settings_path = 3;
+  Status status = 4;
+  State desired_state = 5;
+  State current_state = 6;
+  GameStatus game_status = 7;
 }

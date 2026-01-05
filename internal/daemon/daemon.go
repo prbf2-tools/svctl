@@ -79,7 +79,11 @@ func Recover(configFile string) (*Daemon, error) {
 	for serverID, sv := range d.ServersInfo {
 		settingsPath := sv.SettingsPath
 		if !filepath.IsAbs(settingsPath) {
-			settingsPath = filepath.Join(serverID, sv.SettingsPath)
+			if sv.Type != LocalServer {
+				slog.Warn("Non-local server with relative settings path", "serverID", serverID, "settingsPath", settingsPath)
+			} else {
+				settingsPath = filepath.Join(serverID, sv.SettingsPath)
+			}
 		}
 
 		var s *server.Server
@@ -87,7 +91,7 @@ func Recover(configFile string) (*Daemon, error) {
 		switch sv.Type {
 		case LocalServer:
 			s, err = server.OpenLocal(
-				serverID,
+				sv.Location,
 				settingsPath,
 			)
 			if err != nil {
@@ -96,7 +100,7 @@ func Recover(configFile string) (*Daemon, error) {
 			}
 		case DockerServer:
 			s, err = server.OpenDocker(
-				serverID,
+				sv.Location,
 				settingsPath,
 			)
 			if err != nil {
@@ -105,7 +109,7 @@ func Recover(configFile string) (*Daemon, error) {
 			}
 		case SystemdServer:
 			s, err = server.OpenSystemd(
-				serverID,
+				sv.Location,
 				settingsPath,
 			)
 			if err != nil {
@@ -149,8 +153,8 @@ func Recover(configFile string) (*Daemon, error) {
 	return d, nil
 }
 
-func (s *Daemon) Register(serverID, settingsPath string, typ ServerType) error {
-	err := s.AddServer(serverID, settingsPath, typ)
+func (s *Daemon) Register(serverID, location, settingsPath string, typ ServerType) error {
+	err := s.AddServer(serverID, location, settingsPath, typ)
 	if err != nil {
 		return err
 	}
@@ -158,17 +162,17 @@ func (s *Daemon) Register(serverID, settingsPath string, typ ServerType) error {
 	var sv *server.Server
 	switch typ {
 	case LocalServer:
-		sv, err = server.OpenLocal(serverID, settingsPath)
+		sv, err = server.OpenLocal(location, settingsPath)
 		if err != nil {
 			return err
 		}
 	case DockerServer:
-		sv, err = server.OpenDocker(serverID, settingsPath)
+		sv, err = server.OpenDocker(location, settingsPath)
 		if err != nil {
 			return err
 		}
 	case SystemdServer:
-		sv, err = server.OpenSystemd(serverID, settingsPath)
+		sv, err = server.OpenSystemd(location, settingsPath)
 		if err != nil {
 			return err
 		}
@@ -181,13 +185,13 @@ func (s *Daemon) Register(serverID, settingsPath string, typ ServerType) error {
 	return nil
 }
 
-func (s *Daemon) Start(path string) error {
-	sv, err := s.findServer(path)
+func (s *Daemon) Start(id string) error {
+	sv, err := s.findServer(id)
 	if err != nil {
 		return err
 	}
 
-	err = s.ChangeState(path, Running)
+	err = s.ChangeState(id, Running)
 	if err != nil {
 		return err
 	}
@@ -201,13 +205,13 @@ func (s *Daemon) Start(path string) error {
 	return nil
 }
 
-func (s *Daemon) Stop(path string) error {
-	sv, err := s.findServer(path)
+func (s *Daemon) Stop(id string) error {
+	sv, err := s.findServer(id)
 	if err != nil {
 		return err
 	}
 
-	err = s.ChangeState(path, Stopped)
+	err = s.ChangeState(id, Stopped)
 	if err != nil {
 		return err
 	}
@@ -221,14 +225,14 @@ func (s *Daemon) Stop(path string) error {
 	return nil
 }
 
-func (s *Daemon) Reset(path string) error {
-	sv, err := s.findServer(path)
+func (s *Daemon) Reset(id string) error {
+	sv, err := s.findServer(id)
 	if err != nil {
 		return err
 	}
 
 	sv.Log.Info("Reseting server", "op", "Daemon.Reset")
-	err = s.ChangeState(path, Stopped)
+	err = s.ChangeState(id, Stopped)
 	if err != nil {
 		return err
 	}
@@ -240,6 +244,7 @@ type ServerStatus struct {
 	DesiredState ServerState
 	CurrentState ServerState
 	SettingsPath string
+	Location     string
 	GameStatus   *server.Status
 }
 
@@ -263,6 +268,7 @@ func (s *Daemon) Status(id string) (*ServerStatus, error) {
 		DesiredState: info.DesiredState,
 		CurrentState: Stopped,
 		SettingsPath: info.SettingsPath,
+		Location:     info.Location,
 		// GameStatus:   gameStatus,
 	}
 
