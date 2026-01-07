@@ -6,6 +6,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/prbf2-tools/svctl/svctl/v1"
@@ -99,6 +100,9 @@ func (opts *registerOpts) Location() (string, error) {
 	case opts.containerName != "":
 		return opts.containerName, nil
 	case opts.localPath != "":
+		if filepath.IsAbs(opts.localPath) {
+			return opts.localPath, nil
+		}
 		return concatWithWorkingDir(opts.localPath)
 	default:
 		return "", fmt.Errorf("no server identifier provided")
