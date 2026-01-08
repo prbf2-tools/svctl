@@ -116,6 +116,7 @@ type TestGRPCServer struct {
 	Listener net.Listener
 	Mock     *MockServersServer
 	Address  string
+	done     chan struct{}
 }
 
 // NewTestGRPCServer creates a new test gRPC server with a mock implementation
@@ -131,10 +132,16 @@ func NewTestGRPCServer(t *testing.T) *TestGRPCServer {
 	mock := &MockServersServer{}
 	svctl.RegisterServersServer(server, mock)
 
+	done := make(chan struct{})
+
 	// Start server in background
 	go func() {
-		err = server.Serve(lis)
-		require.NoError(t, err)
+		defer close(done)
+		err := server.Serve(lis)
+		// Only assert no error if the server wasn't gracefully stopped
+		if err != nil && err != grpc.ErrServerStopped {
+			require.NoError(t, err)
+		}
 	}()
 
 	return &TestGRPCServer{
@@ -142,16 +149,21 @@ func NewTestGRPCServer(t *testing.T) *TestGRPCServer {
 		Listener: lis,
 		Mock:     mock,
 		Address:  lis.Addr().String(),
+		done:     done,
 	}
 }
 
 // Close shuts down the test server
 func (ts *TestGRPCServer) Close() {
 	if ts.Server != nil {
-		ts.Server.Stop()
+		ts.Server.GracefulStop()
 	}
 	if ts.Listener != nil {
 		_ = ts.Listener.Close()
+	}
+	// Wait for the server goroutine to finish
+	if ts.done != nil {
+		<-ts.done
 	}
 }
 
