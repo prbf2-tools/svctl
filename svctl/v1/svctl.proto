@@ -10,6 +10,7 @@ service Servers {
   rpc Register(RegisterServerOpts) returns (ServerInfo) {}
   rpc Status(ServerOpts) returns (ServerInfo) {}
   rpc Reset(ServerOpts) returns (ServerInfo) {}
+  rpc Render(RenderOpts) returns (ServerInfo) {}
 }
 
 message ServerOpts { string id = 1; }
@@ -26,6 +27,11 @@ message RegisterServerOpts {
   string location = 2;
   string settings_path = 3;
   ServerType type = 4;
+}
+
+message RenderOpts {
+  string id = 1;
+  bool reloadable_only = 2;
 }
 
 enum Status {

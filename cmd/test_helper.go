@@ -22,6 +22,7 @@ type MockServersServer struct {
 	StopFunc     func(context.Context, *svctl.ServerOpts) (*svctl.ServerInfo, error)
 	StatusFunc   func(context.Context, *svctl.ServerOpts) (*svctl.ServerInfo, error)
 	ResetFunc    func(context.Context, *svctl.ServerOpts) (*svctl.ServerInfo, error)
+	RenderFunc   func(context.Context, *svctl.RenderOpts) (*svctl.ServerInfo, error)
 }
 
 func (m *MockServersServer) Register(ctx context.Context, opts *svctl.RegisterServerOpts) (*svctl.ServerInfo, error) {
@@ -97,6 +98,18 @@ func (m *MockServersServer) Reset(ctx context.Context, opts *svctl.ServerOpts) (
 	}, nil
 }
 
+func (m *MockServersServer) Render(ctx context.Context, opts *svctl.RenderOpts) (*svctl.ServerInfo, error) {
+	if m.RenderFunc != nil {
+		return m.RenderFunc(ctx, opts)
+	}
+	return &svctl.ServerInfo{
+		Id:           opts.Id,
+		Status:       svctl.Status_STATUS_REGISTERED,
+		DesiredState: svctl.State_STATE_STOPPED,
+		CurrentState: svctl.State_STATE_STOPPED,
+	}, nil
+}
+
 // TestGRPCServer sets up a real gRPC server with mock implementation for testing
 type TestGRPCServer struct {
 	Server   *grpc.Server
@@ -120,9 +133,8 @@ func NewTestGRPCServer(t *testing.T) *TestGRPCServer {
 
 	// Start server in background
 	go func() {
-		if err := server.Serve(lis); err != nil {
-			// Server closed, ignore error
-		}
+		err = server.Serve(lis)
+		require.NoError(t, err)
 	}()
 
 	return &TestGRPCServer{
@@ -139,7 +151,7 @@ func (ts *TestGRPCServer) Close() {
 		ts.Server.Stop()
 	}
 	if ts.Listener != nil {
-		ts.Listener.Close()
+		_ = ts.Listener.Close()
 	}
 }
 
@@ -222,4 +234,3 @@ func ExecuteCommand(t *testing.T, cmd *cobra.Command, args []string) (string, er
 
 	return output.String(), err
 }
-

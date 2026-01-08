@@ -240,6 +240,21 @@ func (s *Daemon) Reset(id string) error {
 	return sv.Event(fsm.EventReset)
 }
 
+func (s *Daemon) Render(id string, reloadableOnly bool) error {
+	sv, err := s.findServer(id)
+	if err != nil {
+		return err
+	}
+
+	err = sv.Server().Render(reloadableOnly)
+	if err != nil {
+		return err
+	}
+
+	sv.Log.Info("Server templates rendered", "op", "Daemon.Render", "reloadableOnly", reloadableOnly)
+	return nil
+}
+
 type ServerStatus struct {
 	DesiredState ServerState
 	CurrentState ServerState

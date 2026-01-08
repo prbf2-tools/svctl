@@ -86,6 +86,15 @@ func (s *daemonServer) Reset(ctx context.Context, opts *svctl.ServerOpts) (*svct
 	return s.fetchServerInfo(opts.GetId())
 }
 
+func (s *daemonServer) Render(ctx context.Context, opts *svctl.RenderOpts) (*svctl.ServerInfo, error) {
+	err := s.daemon.Render(opts.GetId(), opts.GetReloadableOnly())
+	if err != nil {
+		return nil, err
+	}
+
+	return s.fetchServerInfo(opts.GetId())
+}
+
 func (s *daemonServer) fetchServerInfo(id string) (*svctl.ServerInfo, error) {
 	status, err := s.daemon.Status(id)
 	if err != nil {

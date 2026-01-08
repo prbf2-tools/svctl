@@ -24,6 +24,7 @@ const (
 	Servers_Register_FullMethodName = "/svctl.v1.Servers/Register"
 	Servers_Status_FullMethodName   = "/svctl.v1.Servers/Status"
 	Servers_Reset_FullMethodName    = "/svctl.v1.Servers/Reset"
+	Servers_Render_FullMethodName   = "/svctl.v1.Servers/Render"
 )
 
 // ServersClient is the client API for Servers service.
@@ -35,6 +36,7 @@ type ServersClient interface {
 	Register(ctx context.Context, in *RegisterServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
 	Status(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
 	Reset(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
+	Render(ctx context.Context, in *RenderOpts, opts ...grpc.CallOption) (*ServerInfo, error)
 }
 
 type serversClient struct {
@@ -90,6 +92,15 @@ func (c *serversClient) Reset(ctx context.Context, in *ServerOpts, opts ...grpc.
 	return out, nil
 }
 
+func (c *serversClient) Render(ctx context.Context, in *RenderOpts, opts ...grpc.CallOption) (*ServerInfo, error) {
+	out := new(ServerInfo)
+	err := c.cc.Invoke(ctx, Servers_Render_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServersServer is the server API for Servers service.
 // All implementations must embed UnimplementedServersServer
 // for forward compatibility
@@ -99,6 +110,7 @@ type ServersServer interface {
 	Register(context.Context, *RegisterServerOpts) (*ServerInfo, error)
 	Status(context.Context, *ServerOpts) (*ServerInfo, error)
 	Reset(context.Context, *ServerOpts) (*ServerInfo, error)
+	Render(context.Context, *RenderOpts) (*ServerInfo, error)
 	mustEmbedUnimplementedServersServer()
 }
 
@@ -120,6 +132,9 @@ func (UnimplementedServersServer) Status(context.Context, *ServerOpts) (*ServerI
 }
 func (UnimplementedServersServer) Reset(context.Context, *ServerOpts) (*ServerInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Reset not implemented")
+}
+func (UnimplementedServersServer) Render(context.Context, *RenderOpts) (*ServerInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Render not implemented")
 }
 func (UnimplementedServersServer) mustEmbedUnimplementedServersServer() {}
 
@@ -224,6 +239,24 @@ func _Servers_Reset_Handler(srv interface{}, ctx context.Context, dec func(inter
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Servers_Render_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RenderOpts)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServersServer).Render(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Servers_Render_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServersServer).Render(ctx, req.(*RenderOpts))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Servers_ServiceDesc is the grpc.ServiceDesc for Servers service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -250,6 +283,10 @@ var Servers_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Reset",
 			Handler:    _Servers_Reset_Handler,
+		},
+		{
+			MethodName: "Render",
+			Handler:    _Servers_Render_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
