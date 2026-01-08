@@ -15,7 +15,7 @@ func TestResetCmd(t *testing.T) {
 		args           []string
 		mockFunc       func(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error)
 		expectedOutput string
-		expectError    bool
+		errOutput      string
 	}{
 		{
 			name: "successful reset",
@@ -30,6 +30,11 @@ func TestResetCmd(t *testing.T) {
 				}, nil
 			},
 			expectedOutput: "Reseted completed: STATUS_REGISTERED\n",
+		},
+		{
+			name:      "missing arguments",
+			args:      []string{},
+			errOutput: "accepts 1 arg(s), received 0",
 		},
 	}
 
@@ -49,8 +54,9 @@ func TestResetCmd(t *testing.T) {
 			output, err := ExecuteCommandWithServer(t, cmd, testServer, tt.args)
 
 			// Check results
-			if tt.expectError {
+			if tt.errOutput != "" {
 				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errOutput)
 			} else {
 				require.NoError(t, err)
 				assert.Contains(t, output, tt.expectedOutput)
@@ -59,15 +65,4 @@ func TestResetCmd(t *testing.T) {
 	}
 }
 
-func TestResetCmdMissingArgs(t *testing.T) {
-	testServer := NewTestGRPCServer(t)
-	defer testServer.Close()
-
-	cmd := resetCmd()
-
-	_, err := ExecuteCommandWithServer(t, cmd, testServer, []string{})
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "accepts 1 arg(s), received 0")
-}
 

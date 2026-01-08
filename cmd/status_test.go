@@ -15,7 +15,7 @@ func TestStatusCmd(t *testing.T) {
 		args           []string
 		mockFunc       func(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error)
 		expectedOutput []string
-		expectError    bool
+		errOutput      string
 	}{
 		{
 			name: "successful status",
@@ -51,7 +51,6 @@ func TestStatusCmd(t *testing.T) {
 				"Game Mode: gpm_cq",
 				"Map Name: strike_at_karkand",
 			},
-			expectError: false,
 		},
 		{
 			name: "json output",
@@ -63,7 +62,11 @@ func TestStatusCmd(t *testing.T) {
 				`"id": "test-server"`,
 				`"location": "/test/test-server"`,
 			},
-			expectError: false,
+		},
+		{
+			name:      "missing arguments",
+			args:      []string{},
+			errOutput: "accepts 1 arg(s), received 0",
 		},
 	}
 
@@ -83,8 +86,9 @@ func TestStatusCmd(t *testing.T) {
 			output, err := ExecuteCommandWithServer(t, cmd, testServer, tt.args)
 
 			// Check results
-			if tt.expectError {
+			if tt.errOutput != "" {
 				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errOutput)
 			} else {
 				require.NoError(t, err)
 				for _, expected := range tt.expectedOutput {
@@ -95,14 +99,3 @@ func TestStatusCmd(t *testing.T) {
 	}
 }
 
-func TestStatusCmdMissingArgs(t *testing.T) {
-	testServer := NewTestGRPCServer(t)
-	defer testServer.Close()
-
-	cmd := statusCmd()
-	
-	_, err := ExecuteCommandWithServer(t, cmd, testServer, []string{})
-	
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "accepts 1 arg(s), received 0")
-}

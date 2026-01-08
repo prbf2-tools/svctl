@@ -15,7 +15,7 @@ func TestStopCmd(t *testing.T) {
 		args           []string
 		mockFunc       func(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error)
 		expectedOutput string
-		expectError    bool
+		errOutput      string
 	}{
 		{
 			name: "successful stop",
@@ -28,7 +28,11 @@ func TestStopCmd(t *testing.T) {
 				}, nil
 			},
 			expectedOutput: "Server status: STATUS_STOPPING\n",
-			expectError:    false,
+		},
+		{
+			name:      "missing arguments",
+			args:      []string{},
+			errOutput: "accepts 1 arg(s), received 0",
 		},
 	}
 
@@ -48,8 +52,9 @@ func TestStopCmd(t *testing.T) {
 			output, err := ExecuteCommandWithServer(t, cmd, testServer, tt.args)
 
 			// Check results
-			if tt.expectError {
+			if tt.errOutput != "" {
 				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errOutput)
 			} else {
 				require.NoError(t, err)
 				assert.Contains(t, output, tt.expectedOutput)
@@ -58,14 +63,3 @@ func TestStopCmd(t *testing.T) {
 	}
 }
 
-func TestStopCmdMissingArgs(t *testing.T) {
-	testServer := NewTestGRPCServer(t)
-	defer testServer.Close()
-
-	cmd := stopCmd()
-	
-	_, err := ExecuteCommandWithServer(t, cmd, testServer, []string{})
-	
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "accepts 1 arg(s), received 0")
-}

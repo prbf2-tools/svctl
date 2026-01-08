@@ -15,7 +15,7 @@ func TestRegisterCmd(t *testing.T) {
 		args           []string
 		mockFunc       func(ctx context.Context, opts *svctl.RegisterServerOpts) (*svctl.ServerInfo, error)
 		expectedOutput string
-		expectError    bool
+		errOutput      string
 	}{
 		{
 			name: "successful register with local path",
@@ -59,6 +59,16 @@ func TestRegisterCmd(t *testing.T) {
 			},
 			expectedOutput: "Server status: STATUS_REGISTERED\n",
 		},
+		{
+			name:      "missing arguments",
+			args:      []string{},
+			errOutput: "accepts 1 arg(s), received 0",
+		},
+		{
+			name:      "missing location flags",
+			args:      []string{"test-server"},
+			errOutput: "flags in the group",
+		},
 	}
 
 	for _, tt := range tests {
@@ -77,8 +87,9 @@ func TestRegisterCmd(t *testing.T) {
 			output, err := ExecuteCommandWithServer(t, cmd, testServer, tt.args)
 
 			// Check results
-			if tt.expectError {
+			if tt.errOutput != "" {
 				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errOutput)
 			} else {
 				require.NoError(t, err)
 				assert.Contains(t, output, tt.expectedOutput)
@@ -87,27 +98,4 @@ func TestRegisterCmd(t *testing.T) {
 	}
 }
 
-func TestRegisterCmdMissingArgs(t *testing.T) {
-	testServer := NewTestGRPCServer(t)
-	defer testServer.Close()
-
-	cmd := registerCmd()
-
-	_, err := ExecuteCommandWithServer(t, cmd, testServer, []string{})
-
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "accepts 1 arg(s), received 0")
-}
-
-func TestRegisterCmdMissingLocation(t *testing.T) {
-	testServer := NewTestGRPCServer(t)
-	defer testServer.Close()
-
-	cmd := registerCmd()
-
-	_, err := ExecuteCommandWithServer(t, cmd, testServer, []string{"test-server"})
-
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "flags in the group")
-}
 

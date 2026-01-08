@@ -16,7 +16,7 @@ func TestRestartCmd(t *testing.T) {
 		stopFunc       func(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error)
 		startFunc      func(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error)
 		expectedOutput []string
-		expectError    bool
+		errOutput      string
 	}{
 		{
 			name: "successful restart",
@@ -40,7 +40,11 @@ func TestRestartCmd(t *testing.T) {
 				"Starting server test-server...",
 				"Server restarted: STATUS_STARTING",
 			},
-			expectError: false,
+		},
+		{
+			name:      "missing arguments",
+			args:      []string{},
+			errOutput: "accepts 1 arg(s), received 0",
 		},
 	}
 
@@ -61,8 +65,9 @@ func TestRestartCmd(t *testing.T) {
 			output, err := ExecuteCommandWithServer(t, cmd, testServer, tt.args)
 
 			// Check results
-			if tt.expectError {
+			if tt.errOutput != "" {
 				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errOutput)
 			} else {
 				require.NoError(t, err)
 				for _, expected := range tt.expectedOutput {
@@ -73,14 +78,3 @@ func TestRestartCmd(t *testing.T) {
 	}
 }
 
-func TestRestartCmdMissingArgs(t *testing.T) {
-	testServer := NewTestGRPCServer(t)
-	defer testServer.Close()
-
-	cmd := restartCmd()
-	
-	_, err := ExecuteCommandWithServer(t, cmd, testServer, []string{})
-	
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "accepts 1 arg(s), received 0")
-}
