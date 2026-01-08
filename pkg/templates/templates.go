@@ -7,18 +7,21 @@ import (
 	"text/template"
 
 	"dario.cat/mergo"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )
 
 const (
 	configFileName = "config.yaml"
+	schemaFileName = "schema.json"
 )
 
 type Values map[string]any
 
 type Data struct {
-	Values Values
-	Config any
+	Values   Values
+	Defaults Values
+	Config   any
 }
 
 type Template struct {
@@ -93,6 +96,8 @@ func (t *Renderer) prepData(values Values) (*Data, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	data.Defaults = defaults
 
 	err = mergo.Map(&data.Values, defaults)
 	if err != nil {
@@ -190,4 +195,29 @@ func (t *Renderer) Defaults() (Values, error) {
 	}
 
 	return defaults, nil
+}
+
+func (t *Renderer) Schema() (*jsonschema.Schema, error) {
+	schemaContent, err := fs.ReadFile(t.files, schemaFileName)
+	if err != nil {
+		return nil, err
+	}
+
+	schema, err := jsonschema.CompileString("schema.json", string(schemaContent))
+	if err != nil {
+		return nil, err
+	}
+
+	return schema, nil
+}
+
+func MergeValues(sources ...Values) (Values, error) {
+	allValues := make(Values)
+	for _, values := range sources {
+		err := mergo.Map(&allValues, values, mergo.WithAppendSlice, mergo.WithOverride)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return allValues, nil
 }

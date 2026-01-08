@@ -4,12 +4,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/docker/client"
-	"github.com/sboon-gg/svctl/internal/game"
-	"github.com/sboon-gg/svctl/internal/game/docker"
-	"github.com/sboon-gg/svctl/internal/game/local"
-	"github.com/sboon-gg/svctl/internal/settings"
-	"github.com/sboon-gg/svctl/pkg/templates"
+	"github.com/moby/moby/client"
+	"github.com/prbf2-tools/svctl/internal/game"
+	"github.com/prbf2-tools/svctl/internal/game/docker"
+	"github.com/prbf2-tools/svctl/internal/game/local"
+	"github.com/prbf2-tools/svctl/internal/game/systemd"
+	"github.com/prbf2-tools/svctl/internal/settings"
+	"github.com/prbf2-tools/svctl/pkg/templates"
 )
 
 type Server struct {
@@ -17,56 +18,65 @@ type Server struct {
 	settings.Settings
 }
 
-func Open(serverPath, settingsPath string) (*Server, error) {
+func Open(server game.GameServer, settingsPath string) (*Server, error) {
 	s, err := settings.Open(settingsPath)
 	if err != nil {
 		return nil, err
 	}
 
-	config, err := s.Config()
-	if err != nil {
-		return nil, err
-	}
-
-	var g game.GameServer
-	if config.Docker != nil {
-		c, err := client.NewClientWithOpts(client.FromEnv)
-		if err != nil {
-			return nil, err
-		}
-
-		g, err = docker.Open(c, config.Docker.ContainerName)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		g, err = local.Open(serverPath)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	sv := &Server{
-		GameServer: g,
+		GameServer: server,
 		Settings:   *s,
 	}
 
-	sv.Log = sv.Log.With("server", filepath.Base(serverPath))
+	sv.Log = sv.Log.With("server", server.ID())
 
 	return sv, nil
 }
 
+func OpenLocal(serverPath, settingsPath string) (*Server, error) {
+	g, err := local.Open(serverPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return Open(g, settingsPath)
+}
+
+func OpenDocker(containerName, settingsPath string) (*Server, error) {
+	c, err := client.New(client.FromEnv)
+	if err != nil {
+		return nil, err
+	}
+
+	g, err := docker.Open(c, containerName)
+	if err != nil {
+		return nil, err
+	}
+
+	return Open(g, settingsPath)
+}
+
+func OpenSystemd(serviceName, settingsPath string) (*Server, error) {
+	g, err := systemd.Open(serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	return Open(g, settingsPath)
+}
+
 func (s *Server) Render(reloadableOnly bool) error {
-	if s.Settings.Templates == nil {
+	if s.Templates == nil {
 		return nil
 	}
 
-	values, gameConfig, err := s.Settings.TemplateData()
+	values, gameConfig, err := s.TemplateData()
 	if err != nil {
 		return err
 	}
 
-	outputs, err := s.Settings.Templates.Render(gameConfig, values)
+	outputs, err := s.Templates.Render(gameConfig, values)
 	if err != nil {
 		return err
 	}
@@ -86,20 +96,20 @@ func (s *Server) Render(reloadableOnly bool) error {
 }
 
 func (s *Server) DryRender() ([]templates.RenderOutput, error) {
-	if s.Settings.Templates == nil {
+	if s.Templates == nil {
 		return nil, nil
 	}
 
-	values, gameConfig, err := s.Settings.TemplateData()
+	values, gameConfig, err := s.TemplateData()
 	if err != nil {
 		return nil, err
 	}
 
-	return s.Settings.Templates.Render(gameConfig, values)
+	return s.Templates.Render(gameConfig, values)
 }
 
 func (s *Server) ApplyPatches() error {
-	cfg, err := s.Settings.Config()
+	cfg, err := s.Config()
 	if err != nil {
 		return err
 	}
@@ -109,11 +119,13 @@ func (s *Server) ApplyPatches() error {
 			continue
 		}
 
-		f, err := os.Open(filepath.Join(s.Settings.Path, patch.Source))
+		f, err := os.Open(filepath.Join(s.Path, patch.Source))
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			_ = f.Close()
+		}()
 
 		stat, err := f.Stat()
 		if err != nil {

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/prbf2-tools/svctl/internal/game"
 )
 
 const (
@@ -43,6 +43,10 @@ func Open(path string) (*Server, error) {
 	return s, nil
 }
 
+func (s *Server) ID() string {
+	return s.path
+}
+
 func (s *Server) ReadFile(path string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(s.path, path))
 }
@@ -70,7 +74,9 @@ func (s *Server) WriteFileFromReader(path string, r io.Reader, _ int64) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	_, err = io.Copy(f, r)
 	return err

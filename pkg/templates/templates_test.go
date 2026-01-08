@@ -1,7 +1,6 @@
 package templates
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -99,8 +98,7 @@ mapList.append saaremaa gpm_coop 64
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			for k, v := range test.env {
-				os.Setenv(k, v)
-				defer os.Unsetenv(k)
+				t.Setenv(k, v)
 			}
 
 			tmpl, err := NewFromPath("./testdata/example")

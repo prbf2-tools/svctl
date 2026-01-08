@@ -6,22 +6,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sboon-gg/svctl/svctl"
+	"github.com/prbf2-tools/svctl/svctl/v1"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type statusOpts struct {
-	*serverOpts
-	*daemonOpts
+	*grpcClientCmdOpts
 	json bool
 }
 
 func newStatusOpts() *statusOpts {
 	return &statusOpts{
-		serverOpts: newServerOpts(),
-		daemonOpts: newDaemonOpts(),
+		grpcClientCmdOpts: newGrpcClientCmdOpts(),
 	}
 }
 
@@ -29,10 +25,12 @@ func statusCmd() *cobra.Command {
 	opts := newStatusOpts()
 
 	cmd := &cobra.Command{
-		Use:          "status",
+		Use:          "status <server-id>",
 		Short:        "Server status",
 		Long:         `Display the status of the server`,
 		SilenceUsage: true,
+		PreRunE:      opts.PreRunE,
+		Args:         cobra.ExactArgs(1),
 		RunE:         opts.Run,
 	}
 
@@ -42,29 +40,27 @@ func statusCmd() *cobra.Command {
 }
 
 func (o *statusOpts) AddFlags(cmd *cobra.Command) {
-	o.serverOpts.AddFlags(cmd)
-	o.daemonOpts.AddFlags(cmd)
+	o.grpcClientCmdOpts.AddFlags(cmd)
 
 	cmd.Flags().BoolVarP(&o.json, "json", "j", false, "Output as JSON")
 }
 
 func (o *statusOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.NewClient(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	c, conn, err := o.Client()
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
+		return err
 	}
-	defer conn.Close()
-	c := svctl.NewServersClient(conn)
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			cmd.PrintErrf("error closing connection: %v\n", err)
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
 
-	path, err := o.Path()
-	if err != nil {
-		return err
-	}
-
-	status, err := c.Status(ctx, &svctl.ServerOpts{Path: path})
+	status, err := c.Status(ctx, &svctl.ServerOpts{Id: o.id})
 	if err != nil {
 		return fmt.Errorf("error calling function Status: %v", err)
 	}
@@ -80,7 +76,7 @@ func (o *statusOpts) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	cmd.Printf("Server Info:\n")
-	cmd.Printf("  Path: %s\n", status.Path)
+	cmd.Printf("  Path: %s\n", status.Location)
 	cmd.Printf("  Settings Path: %s\n", status.SettingsPath)
 	cmd.Printf("  Desired State: %v\n", status.DesiredState)
 	cmd.Printf("  Current State: %v\n", status.CurrentState)

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/sboon-gg/svctl/internal/server"
+	"github.com/prbf2-tools/svctl/internal/server"
 )
 
 type GameServer interface {

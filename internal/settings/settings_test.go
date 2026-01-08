@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/sboon-gg/svctl/internal/settings"
+	"github.com/prbf2-tools/svctl/internal/settings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -89,7 +89,9 @@ func createRepoFromTemplatesDir(t *testing.T, templatesDir, repoDir string) {
 		if err != nil {
 			return err
 		}
-		defer in.Close()
+		defer func() {
+			_ = in.Close()
+		}()
 
 		out, err := os.Create(dst)
 		if err != nil {

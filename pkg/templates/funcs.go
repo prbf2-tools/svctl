@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/sboon-gg/svctl/pkg/maplist"
+	"github.com/prbf2-tools/svctl/pkg/maplist"
 )
 
 func (r *Renderer) FuncMap() template.FuncMap {

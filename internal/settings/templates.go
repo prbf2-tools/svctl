@@ -7,16 +7,15 @@ import (
 	"path/filepath"
 	"strings"
 
-	"dario.cat/mergo"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/goccy/go-yaml"
-	"github.com/sboon-gg/svctl/pkg/templates"
+	"github.com/prbf2-tools/svctl/pkg/templates"
 )
 
 func (s *Settings) TemplateData() (templates.Values, *GameConfig, error) {
-	var allValues templates.Values
+	var allValuesSources []templates.Values
 
 	config, err := s.Config()
 	if err != nil {
@@ -41,16 +40,15 @@ func (s *Settings) TemplateData() (templates.Values, *GameConfig, error) {
 				return nil, nil, err
 			}
 
-			err = mergo.Map(&allValues, values, mergo.WithAppendSlice, mergo.WithOverride)
-			if err != nil {
-				return nil, nil, err
-			}
+			allValuesSources = append(allValuesSources, values)
 		} else if source.Values != nil {
-			err = mergo.Map(&allValues, source.Values, mergo.WithAppendSlice, mergo.WithOverride)
-			if err != nil {
-				return nil, nil, err
-			}
+			allValuesSources = append(allValuesSources, source.Values)
 		}
+	}
+
+	allValues, err := templates.MergeValues(allValuesSources...)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return allValues, &config.Game, nil

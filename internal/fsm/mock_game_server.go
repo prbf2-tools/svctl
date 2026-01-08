@@ -12,7 +12,7 @@ package fsm
 import (
 	reflect "reflect"
 
-	server "github.com/sboon-gg/svctl/internal/server"
+	server "github.com/prbf2-tools/svctl/internal/server"
 	gomock "go.uber.org/mock/gomock"
 )
 

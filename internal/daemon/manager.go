@@ -14,8 +14,18 @@ const (
 	Stopped ServerState = "stopped"
 )
 
+type ServerType string
+
+const (
+	LocalServer   ServerType = "local"
+	DockerServer  ServerType = "docker"
+	SystemdServer ServerType = "systemd"
+)
+
 type ServerInfo struct {
-	ServerPath   string      `yaml:"serverPath"`
+	ID           string      `yaml:"id"`
+	Type         ServerType  `yaml:"type"`
+	Location     string      `yaml:"location"`
 	SettingsPath string      `yaml:"settingsPath"`
 	DesiredState ServerState `yaml:"desiredState"`
 }
@@ -26,30 +36,40 @@ type ServerManager struct {
 }
 
 func NewServerManager(cachePath string) (*ServerManager, error) {
+	manager := &ServerManager{
+		ServersInfo: make(map[string]*ServerInfo),
+		cachePath:   cachePath,
+	}
+
 	content, err := os.ReadFile(cachePath)
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 
-	servers := make(map[string]*ServerInfo)
-	err = yaml.Unmarshal(content, &servers)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return manager, nil
+		}
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(content, &manager.ServersInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ServerManager{
-		ServersInfo: servers,
-		cachePath:   cachePath,
-	}, nil
+	return manager, nil
 }
 
-func (m *ServerManager) AddServer(serverPath, settingsPath string) error {
-	if _, ok := m.ServersInfo[serverPath]; ok {
-		return fmt.Errorf("server %q already exists", serverPath)
+func (m *ServerManager) AddServer(serverID, location, settingsPath string, typ ServerType) error {
+	if _, ok := m.ServersInfo[serverID]; ok {
+		return fmt.Errorf("server %q already exists", serverID)
 	}
 
-	m.ServersInfo[serverPath] = &ServerInfo{
-		ServerPath:   serverPath,
+	m.ServersInfo[serverID] = &ServerInfo{
+		ID:           serverID,
+		Location:     location,
+		Type:         typ,
 		SettingsPath: settingsPath,
 		DesiredState: Stopped,
 	}

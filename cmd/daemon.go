@@ -1,31 +1,24 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 	"net"
 
-	"github.com/sboon-gg/svctl/internal/api"
-	"github.com/sboon-gg/svctl/internal/daemon"
-	"github.com/sboon-gg/svctl/svctl"
+	"github.com/prbf2-tools/svctl/internal/api"
+	"github.com/prbf2-tools/svctl/internal/daemon"
+	"github.com/prbf2-tools/svctl/svctl/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )
 
-const (
-	defaultDaemonHost = "127.0.0.1"
-	defaultDaemonPort = "50051"
-)
-
 type daemonOpts struct {
-	host       string
-	port       string
+	*daemonConnOpts
 	configFile string
 }
 
 func newDaemonOpts() *daemonOpts {
 	return &daemonOpts{
-		host: defaultDaemonHost,
-		port: defaultDaemonPort,
+		daemonConnOpts: newDaemonConnOpts(),
 	}
 }
 
@@ -43,8 +36,7 @@ func daemonCmd() *cobra.Command {
 }
 
 func (o *daemonOpts) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.host, "host", o.host, "Host to listen on")
-	cmd.Flags().StringVar(&o.port, "port", o.port, "Port to listen on")
+	o.daemonConnOpts.AddFlags(cmd)
 	cmd.Flags().StringVar(&o.configFile, "config", o.configFile, "Path to the daemon config file")
 }
 
@@ -56,12 +48,12 @@ func (o *daemonOpts) Run(cmd *cobra.Command, args []string) error {
 
 	lis, err := net.Listen("tcp", o.address())
 	if err != nil {
-		log.Fatalf("failed to listen on address %s: %v", o.address(), err)
+		return fmt.Errorf("failed to listen on address %s: %w", o.address(), err)
 	}
 
 	s := grpc.NewServer()
 	svctl.RegisterServersServer(s, api.NewDaemonServer(d))
-	log.Printf("gRPC server listening at %v", lis.Addr())
+	cmd.Printf("gRPC server listening at %v", lis.Addr())
 
 	go func() {
 		<-cmd.Context().Done()
@@ -69,14 +61,10 @@ func (o *daemonOpts) Run(cmd *cobra.Command, args []string) error {
 	}()
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		return fmt.Errorf("failed to serve: %w", err)
 	}
 
 	return nil
-}
-
-func (o *daemonOpts) address() string {
-	return net.JoinHostPort(o.host, o.port)
 }
 
 func init() {

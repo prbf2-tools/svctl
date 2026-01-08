@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package svctl.v1;
+
+option go_package = "github.com/sboon-gg/svctl/svctl";
+
+service Servers {
+  rpc Start(ServerOpts) returns (ServerInfo) {}
+  rpc Stop(ServerOpts) returns (ServerInfo) {}
+  rpc Register(RegisterServerOpts) returns (ServerInfo) {}
+  rpc Status(ServerOpts) returns (ServerInfo) {}
+  rpc Reset(ServerOpts) returns (ServerInfo) {}
+  rpc Render(RenderOpts) returns (ServerInfo) {}
+}
+
+message ServerOpts { string id = 1; }
+
+enum ServerType {
+  SERVER_TYPE_UNSPECIFIED = 0;
+  SERVER_TYPE_LOCAL = 1;
+  SERVER_TYPE_DOCKER = 2;
+  SERVER_TYPE_SYSTEMD = 3;
+}
+
+message RegisterServerOpts {
+  string id = 1;
+  string location = 2;
+  string settings_path = 3;
+  ServerType type = 4;
+}
+
+message RenderOpts {
+  string id = 1;
+  bool reloadable_only = 2;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_REGISTERED = 1;
+  STATUS_STARTING = 2;
+  STATUS_STOPPING = 3;
+}
+
+enum State {
+  STATE_UNSPECIFIED = 0;
+  STATE_STOPPED = 1;
+  STATE_RUNNING = 2;
+}
+
+message GameStatus {
+  string hostname = 1;
+  string port = 2;
+  string gamemode = 3;
+  string map_name = 4;
+  int64 map_size = 5;
+  int64 num_players = 6;
+  int64 max_players = 7;
+}
+
+message ServerInfo {
+  string id = 1;
+  string location = 2;
+  string settings_path = 3;
+  Status status = 4;
+  State desired_state = 5;
+  State current_state = 6;
+  GameStatus game_status = 7;
+}

@@ -1,24 +1,24 @@
 package cmd
 
 import (
-	"github.com/sboon-gg/svctl/internal/settings"
+	"github.com/prbf2-tools/svctl/internal/settings"
 	"github.com/spf13/cobra"
 )
 
-type initOpts struct {
+type settingsInitOpts struct {
 	serverOpts
 	templatesRepo string
 	token         string
 }
 
-func newInitOpts() *initOpts {
-	return &initOpts{
+func newSettingsInitOpts() *settingsInitOpts {
+	return &settingsInitOpts{
 		serverOpts: *newServerOpts(),
 	}
 }
 
-func initCmd() *cobra.Command {
-	opts := newInitOpts()
+func settingsInitCmd() *cobra.Command {
+	opts := newSettingsInitOpts()
 
 	cmd := &cobra.Command{
 		Use:   "init",
@@ -28,14 +28,19 @@ func initCmd() *cobra.Command {
 		},
 	}
 
-	opts.serverOpts.AddFlags(cmd)
-	cmd.Flags().StringVar(&opts.templatesRepo, "templates-repo", "", "Repository with templates")
-	cmd.Flags().StringVar(&opts.token, "token", "", "Token to use when cloning templates repo")
+	opts.AddFlags(cmd)
 
 	return cmd
 }
 
-func (opts *initOpts) Run() error {
+func (opts *settingsInitOpts) AddFlags(cmd *cobra.Command) {
+	opts.serverOpts.AddFlags(cmd)
+
+	cmd.Flags().StringVar(&opts.templatesRepo, "templates-repo", "", "Repository with templates")
+	cmd.Flags().StringVar(&opts.token, "token", "", "Token to use when cloning templates repo")
+}
+
+func (opts *settingsInitOpts) Run() error {
 	svctlPath, err := opts.SettingsPath()
 	if err != nil {
 		return err
@@ -53,5 +58,5 @@ func (opts *initOpts) Run() error {
 }
 
 func init() {
-	rootCmd.AddCommand(initCmd())
+	settingsCmd.AddCommand(settingsInitCmd())
 }

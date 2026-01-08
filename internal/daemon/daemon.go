@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sboon-gg/svctl/internal/fsm"
-	"github.com/sboon-gg/svctl/internal/server"
+	"github.com/prbf2-tools/svctl/internal/fsm"
+	"github.com/prbf2-tools/svctl/internal/server"
 )
 
 const (
@@ -76,18 +76,48 @@ func Recover(configFile string) (*Daemon, error) {
 		return nil, err
 	}
 
-	for svPath, sv := range d.ServerManager.ServersInfo {
+	for serverID, sv := range d.ServersInfo {
 		settingsPath := sv.SettingsPath
 		if !filepath.IsAbs(settingsPath) {
-			settingsPath = filepath.Join(svPath, sv.SettingsPath)
+			if sv.Type != LocalServer {
+				slog.Warn("Non-local server with relative settings path", "serverID", serverID, "settingsPath", settingsPath)
+			} else {
+				settingsPath = filepath.Join(serverID, sv.SettingsPath)
+			}
 		}
 
-		s, err := server.Open(
-			svPath,
-			settingsPath,
-		)
-		if err != nil {
-			slog.Error("Unable to open server", "svPath", svPath, "settingsPath", settingsPath, "err", err)
+		var s *server.Server
+
+		switch sv.Type {
+		case LocalServer:
+			s, err = server.OpenLocal(
+				sv.Location,
+				settingsPath,
+			)
+			if err != nil {
+				slog.Error("Unable to open local server", "serverID", serverID, "settingsPath", settingsPath, "err", err)
+				continue
+			}
+		case DockerServer:
+			s, err = server.OpenDocker(
+				sv.Location,
+				settingsPath,
+			)
+			if err != nil {
+				slog.Error("Unable to open docker server", "serverID", serverID, "settingsPath", settingsPath, "err", err)
+				continue
+			}
+		case SystemdServer:
+			s, err = server.OpenSystemd(
+				sv.Location,
+				settingsPath,
+			)
+			if err != nil {
+				slog.Error("Unable to open systemd server", "serverID", serverID, "settingsPath", settingsPath, "err", err)
+				continue
+			}
+		default:
+			slog.Error("Unknown server type", "serverID", serverID, "type", sv.Type)
 			continue
 		}
 
@@ -117,35 +147,51 @@ func Recover(configFile string) (*Daemon, error) {
 			}
 		}
 
-		d.Servers[svPath] = machine
+		d.Servers[serverID] = machine
 	}
 
 	return d, nil
 }
 
-func (s *Daemon) Register(serverPath, settingsPath string) error {
-	err := s.ServerManager.AddServer(serverPath, settingsPath)
+func (s *Daemon) Register(serverID, location, settingsPath string, typ ServerType) error {
+	err := s.AddServer(serverID, location, settingsPath, typ)
 	if err != nil {
 		return err
 	}
 
-	sv, err := server.Open(serverPath, settingsPath)
-	if err != nil {
-		return err
+	var sv *server.Server
+	switch typ {
+	case LocalServer:
+		sv, err = server.OpenLocal(location, settingsPath)
+		if err != nil {
+			return err
+		}
+	case DockerServer:
+		sv, err = server.OpenDocker(location, settingsPath)
+		if err != nil {
+			return err
+		}
+	case SystemdServer:
+		sv, err = server.OpenSystemd(location, settingsPath)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unknown server type %q", typ)
 	}
 
-	s.Servers[serverPath] = fsm.New(sv, sv.Log, fsm.NewStateStopped())
+	s.Servers[serverID] = fsm.New(sv, sv.Log, fsm.NewStateStopped())
 
 	return nil
 }
 
-func (s *Daemon) Start(path string) error {
-	sv, err := s.findServer(path)
+func (s *Daemon) Start(id string) error {
+	sv, err := s.findServer(id)
 	if err != nil {
 		return err
 	}
 
-	err = s.ServerManager.ChangeState(path, Running)
+	err = s.ChangeState(id, Running)
 	if err != nil {
 		return err
 	}
@@ -159,13 +205,13 @@ func (s *Daemon) Start(path string) error {
 	return nil
 }
 
-func (s *Daemon) Stop(path string) error {
-	sv, err := s.findServer(path)
+func (s *Daemon) Stop(id string) error {
+	sv, err := s.findServer(id)
 	if err != nil {
 		return err
 	}
 
-	err = s.ServerManager.ChangeState(path, Stopped)
+	err = s.ChangeState(id, Stopped)
 	if err != nil {
 		return err
 	}
@@ -179,14 +225,14 @@ func (s *Daemon) Stop(path string) error {
 	return nil
 }
 
-func (s *Daemon) Reset(path string) error {
-	sv, err := s.findServer(path)
+func (s *Daemon) Reset(id string) error {
+	sv, err := s.findServer(id)
 	if err != nil {
 		return err
 	}
 
 	sv.Log.Info("Reseting server", "op", "Daemon.Reset")
-	err = s.ServerManager.ChangeState(path, Stopped)
+	err = s.ChangeState(id, Stopped)
 	if err != nil {
 		return err
 	}
@@ -194,34 +240,51 @@ func (s *Daemon) Reset(path string) error {
 	return sv.Event(fsm.EventReset)
 }
 
+func (s *Daemon) Render(id string, reloadableOnly bool) error {
+	sv, err := s.findServer(id)
+	if err != nil {
+		return err
+	}
+
+	err = sv.Server().Render(reloadableOnly)
+	if err != nil {
+		return err
+	}
+
+	sv.Log.Info("Server templates rendered", "op", "Daemon.Render", "reloadableOnly", reloadableOnly)
+	return nil
+}
+
 type ServerStatus struct {
 	DesiredState ServerState
 	CurrentState ServerState
 	SettingsPath string
+	Location     string
 	GameStatus   *server.Status
 }
 
-func (s *Daemon) Status(path string) (*ServerStatus, error) {
-	sv, err := s.findServer(path)
+func (s *Daemon) Status(id string) (*ServerStatus, error) {
+	sv, err := s.findServer(id)
 	if err != nil {
 		return nil, err
 	}
 
-	gameStatus, err := sv.Server().Status()
-	if err != nil {
-		sv.Log.Error("Unable to get Gamespy 3 query status", "err", err)
-	}
+	// gameStatus, err := sv.Server().Status()
+	// if err != nil {
+	// 	sv.Log.Error("Unable to get Gamespy 3 query status", "err", err)
+	// }
 
-	info, ok := s.ServersInfo[path]
+	info, ok := s.ServersInfo[id]
 	if !ok {
-		return nil, fmt.Errorf("server %q not found", path)
+		return nil, fmt.Errorf("server %q not found", id)
 	}
 
 	status := ServerStatus{
 		DesiredState: info.DesiredState,
 		CurrentState: Stopped,
 		SettingsPath: info.SettingsPath,
-		GameStatus:   gameStatus,
+		Location:     info.Location,
+		// GameStatus:   gameStatus,
 	}
 
 	if sv.Server() != nil {
@@ -233,10 +296,10 @@ func (s *Daemon) Status(path string) (*ServerStatus, error) {
 	return &status, nil
 }
 
-func (d *Daemon) findServer(path string) (*fsm.FSM, error) {
-	s, ok := d.Servers[path]
+func (d *Daemon) findServer(id string) (*fsm.FSM, error) {
+	s, ok := d.Servers[id]
 	if !ok {
-		return nil, fmt.Errorf("server %q not found", path)
+		return nil, fmt.Errorf("server %q not found", id)
 	}
 
 	return s, nil

@@ -9,9 +9,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/sboon-gg/svctl/internal/game"
+	"github.com/moby/moby/client"
+	"github.com/prbf2-tools/svctl/internal/game"
 )
 
 var _ game.GameServer = &Container{}
@@ -25,19 +24,25 @@ type Container struct {
 }
 
 func Open(c *client.Client, containerName string) (*Container, error) {
-	inspect, err := c.ContainerInspect(context.Background(), containerName)
+	inspect, err := c.ContainerInspect(context.Background(), containerName, client.ContainerInspectOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	workDir := inspect.Config.WorkingDir
+	workDir := inspect.Container.Config.WorkingDir
 
-	readCloser, _, err := c.CopyFromContainer(context.Background(), containerName, path.Join(workDir, "mods/pr/mod.desc"))
+	copyResult, err := c.CopyFromContainer(context.Background(), containerName, client.CopyFromContainerOptions{
+		SourcePath: path.Join(workDir, "mods/pr/mod.desc"),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	defer readCloser.Close()
+	readCloser := copyResult.Content
+
+	defer func() {
+		_ = readCloser.Close()
+	}()
 
 	tarReader := tar.NewReader(readCloser)
 	header, err := tarReader.Next()
@@ -54,21 +59,27 @@ func Open(c *client.Client, containerName string) (*Container, error) {
 	}, nil
 }
 
+func (c *Container) ID() string {
+	return c.name
+}
+
 func (c *Container) Start() error {
-	return c.docker.ContainerStart(context.Background(), c.name, container.StartOptions{})
+	_, err := c.docker.ContainerStart(context.Background(), c.name, client.ContainerStartOptions{})
+	return err
 }
 
 func (c *Container) Stop() error {
-	return c.docker.ContainerStop(context.Background(), c.name, container.StopOptions{})
+	_, err := c.docker.ContainerStop(context.Background(), c.name, client.ContainerStopOptions{})
+	return err
 }
 
 func (c *Container) IsRunning() (bool, error) {
-	inspect, err := c.docker.ContainerInspect(context.Background(), c.name)
+	inspect, err := c.docker.ContainerInspect(context.Background(), c.name, client.ContainerInspectOptions{})
 	if err != nil {
 		return false, err
 	}
 
-	return inspect.State.Running, nil
+	return inspect.Container.State.Running, nil
 }
 
 func (c *Container) WriteFile(filePath string, data []byte) error {
@@ -81,9 +92,11 @@ func (c *Container) WriteFileFromReader(filePath string, reader io.Reader, size 
 	fullPath := path.Join(c.workDir, filePath)
 	mode := int64(0644)
 
-	stat, err := c.docker.ContainerStatPath(ctx, c.name, fullPath)
+	stat, err := c.docker.ContainerStatPath(ctx, c.name, client.ContainerStatPathOptions{
+		Path: fullPath,
+	})
 	if err == nil {
-		mode = int64(stat.Mode)
+		mode = int64(stat.Stat.Mode)
 	}
 
 	f, err := os.CreateTemp("", "svctl-tar-*.tar")
@@ -92,8 +105,8 @@ func (c *Container) WriteFileFromReader(filePath string, reader io.Reader, size 
 	}
 
 	defer func() {
-		f.Close()
-		os.Remove(f.Name())
+		_ = f.Close()
+		_ = os.Remove(f.Name())
 	}()
 
 	tarWriter := tar.NewWriter(f)
@@ -123,23 +136,33 @@ func (c *Container) WriteFileFromReader(filePath string, reader io.Reader, size 
 		return err
 	}
 
-	return c.docker.CopyToContainer(ctx, c.name, path.Dir(fullPath), f, container.CopyToContainerOptions{})
+	_, err = c.docker.CopyToContainer(ctx, c.name, client.CopyToContainerOptions{
+		DestinationPath: path.Dir(fullPath),
+		Content:         f,
+		CopyUIDGID:      true,
+	})
+	return err
 }
 
 func (c *Container) ReadFile(filePath string) ([]byte, error) {
 	ctx := context.Background()
 
 	fullPath := path.Join(c.workDir, filePath)
-	println(fullPath)
 
-	readCloser, stat, err := c.docker.CopyFromContainer(ctx, c.name, fullPath)
+	copyResult, err := c.docker.CopyFromContainer(ctx, c.name, client.CopyFromContainerOptions{
+		SourcePath: fullPath,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	defer readCloser.Close()
+	readCloser := copyResult.Content
 
-	if stat.Mode.IsDir() {
+	defer func() {
+		_ = readCloser.Close()
+	}()
+
+	if copyResult.Stat.Mode.IsDir() {
 		return nil, game.ErrIsDir
 	}
 

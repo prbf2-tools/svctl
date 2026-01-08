@@ -5,21 +5,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sboon-gg/svctl/svctl"
+	"github.com/prbf2-tools/svctl/svctl/v1"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type startOpts struct {
-	*serverOpts
-	*daemonOpts
+	*grpcClientCmdOpts
 }
 
 func newStartOpts() *startOpts {
 	return &startOpts{
-		serverOpts: newServerOpts(),
-		daemonOpts: newDaemonOpts(),
+		grpcClientCmdOpts: newGrpcClientCmdOpts(),
 	}
 }
 
@@ -27,10 +23,12 @@ func startCmd() *cobra.Command {
 	opts := newStartOpts()
 
 	cmd := &cobra.Command{
-		Use:          "start",
+		Use:          "start <server-id>",
 		Short:        "Starts the server",
 		Long:         `Send a start signal to daemon to start the server`,
 		SilenceUsage: true,
+		PreRunE:      opts.PreRunE,
+		Args:         cobra.ExactArgs(1),
 		RunE:         opts.Run,
 	}
 
@@ -41,26 +39,25 @@ func startCmd() *cobra.Command {
 
 func (o *startOpts) AddFlags(cmd *cobra.Command) {
 	o.serverOpts.AddFlags(cmd)
-	o.daemonOpts.AddFlags(cmd)
+	o.daemonConnOpts.AddFlags(cmd)
 }
 
 func (o *startOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.NewClient(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	c, conn, err := o.Client()
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
+		return err
 	}
-	defer conn.Close()
-	c := svctl.NewServersClient(conn)
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			cmd.PrintErrf("error closing connection: %v\n", err)
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
 
-	path, err := o.Path()
-	if err != nil {
-		return err
-	}
-
-	r, err := c.Start(ctx, &svctl.ServerOpts{Path: path})
+	r, err := c.Start(ctx, &svctl.ServerOpts{Id: o.id})
 	if err != nil {
 		return fmt.Errorf("error calling function Start: %v", err)
 	}

@@ -6,23 +6,23 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
-	"github.com/sboon-gg/svctl/svctl"
+	"github.com/prbf2-tools/svctl/svctl/v1"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type registerOpts struct {
-	*serverOpts
-	*daemonOpts
+	*grpcClientCmdOpts
+	localPath     string
+	containerName string
+	serviceName   string
 }
 
 func newRegisterOpts() *registerOpts {
 	return &registerOpts{
-		serverOpts: newServerOpts(),
-		daemonOpts: newDaemonOpts(),
+		grpcClientCmdOpts: newGrpcClientCmdOpts(),
 	}
 }
 
@@ -30,9 +30,11 @@ func registerCmd() *cobra.Command {
 	opts := newRegisterOpts()
 
 	cmd := &cobra.Command{
-		Use:   "register",
-		Short: "register a new user",
-		RunE:  opts.Run,
+		Use:     "register <server-id>",
+		Short:   "register a new server",
+		PreRunE: opts.PreRunE,
+		Args:    cobra.ExactArgs(1),
+		RunE:    opts.Run,
 	}
 
 	opts.AddFlags(cmd)
@@ -40,35 +42,48 @@ func registerCmd() *cobra.Command {
 	return cmd
 }
 
-func (o *registerOpts) AddFlags(cmd *cobra.Command) {
-	o.serverOpts.AddFlags(cmd)
-	o.daemonOpts.AddFlags(cmd)
+func (opts *registerOpts) AddFlags(cmd *cobra.Command) {
+	opts.grpcClientCmdOpts.AddFlags(cmd)
+
+	cmd.Flags().StringVarP(&opts.localPath, "path", "p", "", "Path to server directory")
+	cmd.Flags().StringVarP(&opts.containerName, "container", "c", "", "Name of the Docker container")
+	cmd.Flags().StringVarP(&opts.serviceName, "service", "s", "", "Name of the systemd service")
+
+	_ = cmd.MarkFlagDirname("path")
+	cmd.MarkFlagsMutuallyExclusive("path", "container", "service")
+	cmd.MarkFlagsOneRequired("path", "container", "service")
 }
 
-func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
-	conn, err := grpc.NewClient(o.daemonOpts.address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+func (opts *registerOpts) Run(cmd *cobra.Command, args []string) error {
+	c, conn, err := opts.Client()
 	if err != nil {
-		return fmt.Errorf("failed to connect to gRPC server at %s: %v", o.daemonOpts.address(), err)
+		return err
 	}
-	defer conn.Close()
-	c := svctl.NewServersClient(conn)
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			cmd.PrintErrf("error closing connection: %v\n", err)
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
 
-	path, err := o.Path()
+	location, err := opts.Location()
 	if err != nil {
 		return err
 	}
 
-	settingsPath, err := o.SettingsPath()
+	settingsPath, err := opts.SettingsPath()
 	if err != nil {
 		return err
 	}
 
-	r, err := c.Register(ctx, &svctl.ServerOpts{
-		Path:         path,
+	r, err := c.Register(ctx, &svctl.RegisterServerOpts{
+		Id:           opts.id,
 		SettingsPath: settingsPath,
+		Location:     location,
+		Type:         opts.ServerType(),
 	})
 	if err != nil {
 		return fmt.Errorf("error calling function Register: %v", err)
@@ -76,6 +91,35 @@ func (o *registerOpts) Run(cmd *cobra.Command, args []string) error {
 
 	cmd.Printf("Server status: %v\n", r.GetStatus().String())
 	return nil
+}
+
+func (opts *registerOpts) Location() (string, error) {
+	switch {
+	case opts.serviceName != "":
+		return opts.serviceName, nil
+	case opts.containerName != "":
+		return opts.containerName, nil
+	case opts.localPath != "":
+		if filepath.IsAbs(opts.localPath) {
+			return opts.localPath, nil
+		}
+		return concatWithWorkingDir(opts.localPath)
+	default:
+		return "", fmt.Errorf("no server identifier provided")
+	}
+}
+
+func (opts *registerOpts) ServerType() svctl.ServerType {
+	switch {
+	case opts.serviceName != "":
+		return svctl.ServerType_SERVER_TYPE_SYSTEMD
+	case opts.containerName != "":
+		return svctl.ServerType_SERVER_TYPE_DOCKER
+	case opts.localPath != "":
+		return svctl.ServerType_SERVER_TYPE_LOCAL
+	default:
+		return svctl.ServerType_SERVER_TYPE_UNSPECIFIED
+	}
 }
 
 func init() {
