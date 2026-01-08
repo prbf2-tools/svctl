@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.24.1-alpine AS builder
+FROM golang:1.25.5-alpine AS builder
 
 # Install required tools for building
 RUN apk add --no-cache git make protoc protobuf-dev
@@ -23,10 +23,10 @@ COPY main.go main.go
 COPY Makefile ./
 
 # Generate code and build the daemon
-RUN make build
+RUN make build-linux
 
 # Runtime stage
-FROM alpine:latest
+FROM alpine:3.21
 
 # Install ca-certificates for HTTPS requests and Docker CLI for Docker game servers
 RUN apk add ca-certificates docker-cli
