@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"time"
 
 	"github.com/moby/moby/client"
 	"github.com/prbf2-tools/svctl/internal/game"
@@ -111,11 +112,12 @@ func (c *Container) WriteFileFromReader(filePath string, reader io.Reader, size 
 
 	tarWriter := tar.NewWriter(f)
 	err = tarWriter.WriteHeader(&tar.Header{
-		Name: path.Base(filePath),
-		Size: size,
-		Mode: mode,
-		Uid:  c.uid,
-		Gid:  c.gid,
+		Name:    path.Base(filePath),
+		Size:    size,
+		Mode:    mode,
+		Uid:     c.uid,
+		Gid:     c.gid,
+		ModTime: time.Now(),
 	})
 	if err != nil {
 		return err
