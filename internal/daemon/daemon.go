@@ -185,6 +185,29 @@ func (s *Daemon) Register(serverID, location, settingsPath string, typ ServerTyp
 	return nil
 }
 
+func (s *Daemon) Unregister(id string) error {
+	sv, err := s.findServer(id)
+	if err != nil {
+		return err
+	}
+
+	if sv.Server() != nil {
+		if isRunning, err := sv.Server().IsRunning(); err == nil && isRunning {
+			return fmt.Errorf("cannot unregister running server %q, stop it first", id)
+		}
+	}
+
+	delete(s.Servers, id)
+
+	err = s.RemoveServer(id)
+	if err != nil {
+		return err
+	}
+
+	sv.Log.Info("Server unregistered", "op", "Daemon.Unregister")
+	return nil
+}
+
 func (s *Daemon) Start(id string) error {
 	sv, err := s.findServer(id)
 	if err != nil {

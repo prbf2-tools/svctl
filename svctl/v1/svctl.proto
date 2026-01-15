@@ -8,6 +8,7 @@ service Servers {
   rpc Start(ServerOpts) returns (ServerInfo) {}
   rpc Stop(ServerOpts) returns (ServerInfo) {}
   rpc Register(RegisterServerOpts) returns (ServerInfo) {}
+  rpc Unregister(ServerOpts) returns (ServerInfo) {}
   rpc Status(ServerOpts) returns (ServerInfo) {}
   rpc Reset(ServerOpts) returns (ServerInfo) {}
   rpc Render(RenderOpts) returns (ServerInfo) {}

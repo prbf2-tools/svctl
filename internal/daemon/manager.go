@@ -77,6 +77,15 @@ func (m *ServerManager) AddServer(serverID, location, settingsPath string, typ S
 	return m.Flush()
 }
 
+func (m *ServerManager) RemoveServer(serverID string) error {
+	if _, ok := m.ServersInfo[serverID]; !ok {
+		return fmt.Errorf("server %q not found", serverID)
+	}
+
+	delete(m.ServersInfo, serverID)
+	return m.Flush()
+}
+
 func (m *ServerManager) ChangeState(serverPath string, state ServerState) error {
 	s, ok := m.ServersInfo[serverPath]
 	if !ok {

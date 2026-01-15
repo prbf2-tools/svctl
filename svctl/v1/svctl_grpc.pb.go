@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Servers_Start_FullMethodName    = "/svctl.v1.Servers/Start"
-	Servers_Stop_FullMethodName     = "/svctl.v1.Servers/Stop"
-	Servers_Register_FullMethodName = "/svctl.v1.Servers/Register"
-	Servers_Status_FullMethodName   = "/svctl.v1.Servers/Status"
-	Servers_Reset_FullMethodName    = "/svctl.v1.Servers/Reset"
-	Servers_Render_FullMethodName   = "/svctl.v1.Servers/Render"
+	Servers_Start_FullMethodName      = "/svctl.v1.Servers/Start"
+	Servers_Stop_FullMethodName       = "/svctl.v1.Servers/Stop"
+	Servers_Register_FullMethodName   = "/svctl.v1.Servers/Register"
+	Servers_Unregister_FullMethodName = "/svctl.v1.Servers/Unregister"
+	Servers_Status_FullMethodName     = "/svctl.v1.Servers/Status"
+	Servers_Reset_FullMethodName      = "/svctl.v1.Servers/Reset"
+	Servers_Render_FullMethodName     = "/svctl.v1.Servers/Render"
 )
 
 // ServersClient is the client API for Servers service.
@@ -34,6 +35,7 @@ type ServersClient interface {
 	Start(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
 	Stop(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
 	Register(ctx context.Context, in *RegisterServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
+	Unregister(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
 	Status(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
 	Reset(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error)
 	Render(ctx context.Context, in *RenderOpts, opts ...grpc.CallOption) (*ServerInfo, error)
@@ -74,6 +76,15 @@ func (c *serversClient) Register(ctx context.Context, in *RegisterServerOpts, op
 	return out, nil
 }
 
+func (c *serversClient) Unregister(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error) {
+	out := new(ServerInfo)
+	err := c.cc.Invoke(ctx, Servers_Unregister_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *serversClient) Status(ctx context.Context, in *ServerOpts, opts ...grpc.CallOption) (*ServerInfo, error) {
 	out := new(ServerInfo)
 	err := c.cc.Invoke(ctx, Servers_Status_FullMethodName, in, out, opts...)
@@ -108,6 +119,7 @@ type ServersServer interface {
 	Start(context.Context, *ServerOpts) (*ServerInfo, error)
 	Stop(context.Context, *ServerOpts) (*ServerInfo, error)
 	Register(context.Context, *RegisterServerOpts) (*ServerInfo, error)
+	Unregister(context.Context, *ServerOpts) (*ServerInfo, error)
 	Status(context.Context, *ServerOpts) (*ServerInfo, error)
 	Reset(context.Context, *ServerOpts) (*ServerInfo, error)
 	Render(context.Context, *RenderOpts) (*ServerInfo, error)
@@ -126,6 +138,9 @@ func (UnimplementedServersServer) Stop(context.Context, *ServerOpts) (*ServerInf
 }
 func (UnimplementedServersServer) Register(context.Context, *RegisterServerOpts) (*ServerInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedServersServer) Unregister(context.Context, *ServerOpts) (*ServerInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unregister not implemented")
 }
 func (UnimplementedServersServer) Status(context.Context, *ServerOpts) (*ServerInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
@@ -203,6 +218,24 @@ func _Servers_Register_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Servers_Unregister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ServerOpts)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServersServer).Unregister(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Servers_Unregister_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServersServer).Unregister(ctx, req.(*ServerOpts))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Servers_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ServerOpts)
 	if err := dec(in); err != nil {
@@ -275,6 +308,10 @@ var Servers_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Register",
 			Handler:    _Servers_Register_Handler,
+		},
+		{
+			MethodName: "Unregister",
+			Handler:    _Servers_Unregister_Handler,
 		},
 		{
 			MethodName: "Status",

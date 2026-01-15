@@ -77,6 +77,20 @@ func (s *daemonServer) Status(ctx context.Context, opts *svctl.ServerOpts) (*svc
 	return info, nil
 }
 
+func (s *daemonServer) Unregister(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
+	info, err := s.fetchServerInfo(opts.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.daemon.Unregister(opts.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+
 func (s *daemonServer) Reset(ctx context.Context, opts *svctl.ServerOpts) (*svctl.ServerInfo, error) {
 	err := s.daemon.Reset(opts.GetId())
 	if err != nil {
