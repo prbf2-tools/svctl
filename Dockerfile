@@ -41,4 +41,4 @@ WORKDIR /app
 EXPOSE 9090
 
 # Default command to run daemon
-CMD ["svctl", "daemon", "--data-dir", "/app/data", "--config-dir", "/app/config"]
+ENTRYPOINT ["/usr/local/bin/svctl", "daemon"]
