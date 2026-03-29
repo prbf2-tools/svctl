@@ -16,5 +16,7 @@ type GameServer interface {
 }
 
 var (
-	ErrIsDir = errors.New("path is a directory")
+	ErrIsDir          = errors.New("path is a directory")
+	ErrAlreadyRunning = errors.New("server is already running")
+	ErrNotRunning     = errors.New("server is not running")
 )
