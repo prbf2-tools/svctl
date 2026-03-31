@@ -15,7 +15,14 @@ const (
 	stateFile = "state.yaml"
 )
 
+type fsmServer struct {
+	Server *server.Server
+	State  State
+}
+
 type Daemon struct {
+	servers map[string]*fsmServer
+	states  map[string]State
 	Servers map[string]*fsm.FSM
 	ServerManager
 	config *Config
@@ -209,58 +216,35 @@ func (s *Daemon) Unregister(id string) error {
 }
 
 func (s *Daemon) Start(id string) error {
+	return s.triggerEvent(id, EventStart)
+}
+
+func (s *Daemon) triggerEvent(id string, event Event) error {
 	sv, err := s.findServer(id)
 	if err != nil {
 		return err
 	}
 
-	err = s.ChangeState(id, Running)
+	transition, ok := transitionTable[sv.State][event]
+	if !ok {
+		return fmt.Errorf("invalid event %q for current state %q", event, sv.State)
+	}
+
+	sv.State = transition.transitionState
+	newState, err := transition.handler(sv.Server)
+	sv.State = newState
 	if err != nil {
 		return err
 	}
-
-	err = sv.Event(fsm.EventStart)
-	if err != nil {
-		return err
-	}
-
-	sv.Log.Info("Server started", "op", "Daemon.Start")
 	return nil
 }
 
 func (s *Daemon) Stop(id string) error {
-	sv, err := s.findServer(id)
-	if err != nil {
-		return err
-	}
-
-	err = s.ChangeState(id, Stopped)
-	if err != nil {
-		return err
-	}
-
-	err = sv.Event(fsm.EventStop)
-	if err != nil {
-		return err
-	}
-
-	sv.Log.Info("Server stopped", "op", "Daemon.Stop")
-	return nil
+	return s.triggerEvent(id, EventStop)
 }
 
 func (s *Daemon) Reset(id string) error {
-	sv, err := s.findServer(id)
-	if err != nil {
-		return err
-	}
-
-	sv.Log.Info("Reseting server", "op", "Daemon.Reset")
-	err = s.ChangeState(id, Stopped)
-	if err != nil {
-		return err
-	}
-
-	return sv.Event(fsm.EventReset)
+	return s.triggerEvent(id, EventReset)
 }
 
 func (s *Daemon) Render(id string, reloadableOnly bool) error {
@@ -269,13 +253,7 @@ func (s *Daemon) Render(id string, reloadableOnly bool) error {
 		return err
 	}
 
-	err = sv.Server().Render(reloadableOnly)
-	if err != nil {
-		return err
-	}
-
-	sv.Log.Info("Server templates rendered", "op", "Daemon.Render", "reloadableOnly", reloadableOnly)
-	return nil
+	return sv.Server.Render(reloadableOnly)
 }
 
 type ServerStatus struct {
@@ -319,8 +297,8 @@ func (s *Daemon) Status(id string) (*ServerStatus, error) {
 	return &status, nil
 }
 
-func (d *Daemon) findServer(id string) (*fsm.FSM, error) {
-	s, ok := d.Servers[id]
+func (d *Daemon) findServer(id string) (*fsmServer, error) {
+	s, ok := d.servers[id]
 	if !ok {
 		return nil, fmt.Errorf("server %q not found", id)
 	}
