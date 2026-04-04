@@ -119,7 +119,12 @@ func (s *Server) ApplyPatches() error {
 			continue
 		}
 
-		f, err := os.Open(filepath.Join(s.Path, patch.Source))
+		sourceFile := patch.Source
+		if !filepath.IsAbs(sourceFile) {
+			sourceFile = filepath.Join(s.Path, sourceFile)
+		}
+
+		f, err := os.Open(sourceFile)
 		if err != nil {
 			return err
 		}
